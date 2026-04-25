@@ -1,0 +1,15 @@
+{
+  "common": {
+    "appName": "Needle",
+    "tagline": "the family nest, planned.",
+    "back": "back",
+    "next": "next",
+    "save": "save",
+    "cancel": "cancel",
+    "loading": "loading…"
+  },
+  "onboarding": {
+    "welcome": "welcome",
+    "step": "step {current} of {total}"
+  }
+}

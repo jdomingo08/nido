@@ -1,0 +1,15 @@
+{
+  "common": {
+    "appName": "Needle",
+    "tagline": "el nido familiar, planificado.",
+    "back": "atrás",
+    "next": "siguiente",
+    "save": "guardar",
+    "cancel": "cancelar",
+    "loading": "cargando…"
+  },
+  "onboarding": {
+    "welcome": "bienvenido",
+    "step": "paso {current} de {total}"
+  }
+}
