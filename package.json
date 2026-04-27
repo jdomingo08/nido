@@ -20,9 +20,12 @@
     "trailingComma": "none",
     "printWidth": 100,
     "tabWidth": 2,
-    "plugins": ["prettier-plugin-tailwindcss"]
+    "plugins": [
+      "prettier-plugin-tailwindcss"
+    ]
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.104.1",
     "@upstash/ratelimit": "^2.0.8",
