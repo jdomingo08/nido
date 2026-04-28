@@ -270,6 +270,18 @@ export async function generateCurrentWeek(): Promise<{
   weekPlanId: string
   activityCount: number
 }> {
+  try {
+    return await generateCurrentWeekInner()
+  } catch (e) {
+    console.error('[orchestrator] generateCurrentWeek failed:', e)
+    throw e
+  }
+}
+
+async function generateCurrentWeekInner(): Promise<{
+  weekPlanId: string
+  activityCount: number
+}> {
   const { family } = await requireFamily()
   const supabase = await createSupabaseServerClient()
 
@@ -503,6 +515,17 @@ const DAY_LABEL: Record<(typeof DAY_KEYS)[number], string> = {
 }
 
 export async function regenerateDay(
+  day: (typeof DAY_KEYS)[number]
+): Promise<{ activityCount: number }> {
+  try {
+    return await regenerateDayInner(day)
+  } catch (e) {
+    console.error(`[orchestrator] regenerateDay(${day}) failed:`, e)
+    throw e
+  }
+}
+
+async function regenerateDayInner(
   day: (typeof DAY_KEYS)[number]
 ): Promise<{ activityCount: number }> {
   if (!(DAY_KEYS as readonly string[]).includes(day)) {
