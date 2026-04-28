@@ -547,9 +547,7 @@ export async function regenerateCurrentWeek(): Promise<{
 
 // ─── Phase B: hydrate one day's skeleton activities ────────────
 
-export async function hydrateDay(
-  day: (typeof DAY_KEYS)[number]
-): Promise<{ hydrated: number }> {
+export async function hydrateDay(day: (typeof DAY_KEYS)[number]): Promise<{ hydrated: number }> {
   try {
     return await hydrateDayInner(day)
   } catch (e) {
@@ -558,9 +556,7 @@ export async function hydrateDay(
   }
 }
 
-async function hydrateDayInner(
-  day: (typeof DAY_KEYS)[number]
-): Promise<{ hydrated: number }> {
+async function hydrateDayInner(day: (typeof DAY_KEYS)[number]): Promise<{ hydrated: number }> {
   if (!(DAY_KEYS as readonly string[]).includes(day)) {
     throw new Error(`Invalid day: ${day}`)
   }

@@ -59,7 +59,10 @@ export function GenerateWeekButton({ action }: { action: () => Promise<unknown> 
 
         setStage({ kind: 'done' })
       } catch (e) {
-        setStage({ kind: 'error', message: e instanceof Error ? e.message : 'something went wrong' })
+        setStage({
+          kind: 'error',
+          message: e instanceof Error ? e.message : 'something went wrong'
+        })
       }
     })
   }
@@ -75,7 +78,7 @@ export function GenerateWeekButton({ action }: { action: () => Promise<unknown> 
         <button
           type="button"
           onClick={() => setStage({ kind: 'idle' })}
-          className="rounded-lg border-2 border-[#16121A] bg-[#FBF5E8] px-3 py-1.5 text-xs font-bold uppercase tracking-widest"
+          className="rounded-lg border-2 border-[#16121A] bg-[#FBF5E8] px-3 py-1.5 text-xs font-bold tracking-widest uppercase"
         >
           try again
         </button>
@@ -118,7 +121,7 @@ function SkeletonProgress() {
     <div className="w-full max-w-md text-left">
       <div className="rounded-2xl border-2 border-[#16121A] bg-[#16121A] p-5 text-[#FBF5E8] shadow-[4px_4px_0_#FF3D7F]">
         <div className="flex items-center justify-between">
-          <p className="font-mono text-xs uppercase tracking-widest opacity-60">
+          <p className="font-mono text-xs tracking-widest uppercase opacity-60">
             phase 1 · skeleton · {elapsed}s
           </p>
           <Spinner />
@@ -163,14 +166,12 @@ function HydrateProgress({ done, failed }: { done: Set<DayKey>; failed: Set<DayK
     <div className="w-full max-w-md text-left">
       <div className="rounded-2xl border-2 border-[#16121A] bg-[#16121A] p-5 text-[#FBF5E8] shadow-[4px_4px_0_#FF3D7F]">
         <div className="flex items-center justify-between">
-          <p className="font-mono text-xs uppercase tracking-widest opacity-60">
+          <p className="font-mono text-xs tracking-widest uppercase opacity-60">
             phase 2 · filling in details
           </p>
           <Spinner />
         </div>
-        <p className="mt-1 text-xs opacity-70">
-          each day gets its own pass — running in parallel.
-        </p>
+        <p className="mt-1 text-xs opacity-70">each day gets its own pass — running in parallel.</p>
         <ul className="mt-4 grid grid-cols-7 gap-1.5">
           {DAYS.map((day) => {
             const isDone = done.has(day)
@@ -178,7 +179,7 @@ function HydrateProgress({ done, failed }: { done: Set<DayKey>; failed: Set<DayK
             return (
               <li
                 key={day}
-                className={`flex flex-col items-center gap-1 rounded-md border-2 py-2 font-mono text-[10px] uppercase tracking-widest ${
+                className={`flex flex-col items-center gap-1 rounded-md border-2 py-2 font-mono text-[10px] tracking-widest uppercase ${
                   isFailed
                     ? 'border-[#FF3D7F] bg-[#FFB4A5]/40 text-[#16121A]'
                     : isDone
@@ -192,7 +193,7 @@ function HydrateProgress({ done, failed }: { done: Set<DayKey>; failed: Set<DayK
             )
           })}
         </ul>
-        <p className="mt-4 font-mono text-[10px] uppercase tracking-widest opacity-40">
+        <p className="mt-4 font-mono text-[10px] tracking-widest uppercase opacity-40">
           your week is already visible — details fill in as each day finishes.
         </p>
       </div>
