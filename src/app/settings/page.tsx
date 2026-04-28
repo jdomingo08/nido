@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { requireFamily } from '@/domains/family/server/auth'
 import { signOut } from '@/domains/family/server/onboarding'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { getSupabaseAdminClient } from '@/lib/supabase/admin'
+import { AdultsSection } from './adults-section'
 import { FamilySection } from './family-section'
 import { KidsSection } from './kids-section'
 import { PreferencesSection } from './preferences-section'
@@ -10,18 +12,51 @@ export default async function SettingsPage() {
   const { user, family } = await requireFamily()
   const supabase = await createSupabaseServerClient()
 
-  const [{ data: kids }, { data: preferences }] = await Promise.all([
-    supabase
-      .from('kids')
-      .select('*')
-      .eq('family_id', family.id)
-      .order('created_at', { ascending: true }),
-    supabase
-      .from('family_preferences')
-      .select('*')
-      .eq('family_id', family.id)
-      .order('created_at', { ascending: true })
-  ])
+  const [{ data: kids }, { data: preferences }, { data: members }, { data: invitations }] =
+    await Promise.all([
+      supabase
+        .from('kids')
+        .select('*')
+        .eq('family_id', family.id)
+        .order('created_at', { ascending: true }),
+      supabase
+        .from('family_preferences')
+        .select('*')
+        .eq('family_id', family.id)
+        .order('created_at', { ascending: true }),
+      supabase
+        .from('family_members')
+        .select('*')
+        .eq('family_id', family.id)
+        .order('created_at', { ascending: true }),
+      supabase
+        .from('family_invitations')
+        .select('*')
+        .eq('family_id', family.id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+    ])
+
+  // Augment members with their auth email so the UI can show "you · jane@x.com".
+  // Auth emails live in auth.users; service-role client is the only way in.
+  const memberAuthIds = (members ?? []).map((m) => m.auth_user_id)
+  const emailByAuthId = new Map<string, string>()
+  if (memberAuthIds.length > 0) {
+    const admin = getSupabaseAdminClient()
+    // listUsers paginates; for v1 we have at most a handful of members per
+    // family, so a single page is plenty.
+    const { data: usersList } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 })
+    for (const u of usersList?.users ?? []) {
+      if (u.email) emailByAuthId.set(u.id, u.email)
+    }
+  }
+  const enrichedMembers = (members ?? []).map((m) => ({
+    ...m,
+    email: emailByAuthId.get(m.auth_user_id) ?? null
+  }))
+
+  const currentMember = enrichedMembers.find((m) => m.auth_user_id === user.id)
+  const isOwner = currentMember?.is_owner ?? false
 
   return (
     <main className="min-h-screen bg-[#F5ECDC] p-6 md:p-10">
@@ -61,6 +96,12 @@ export default async function SettingsPage() {
 
         <div className="mt-8 flex flex-col gap-6">
           <FamilySection family={family} />
+          <AdultsSection
+            members={enrichedMembers}
+            invitations={invitations ?? []}
+            currentUserId={user.id}
+            isOwner={isOwner}
+          />
           <KidsSection kids={kids ?? []} />
           <PreferencesSection preferences={preferences ?? []} />
         </div>

@@ -163,6 +163,51 @@ export type Database = {
         }
         Relationships: []
       }
+      family_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          avatar_color: string
+          created_at: string
+          email: string
+          expires_at: string
+          family_id: string
+          id: string
+          invited_by: string
+          role: string
+          status: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          avatar_color?: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          family_id: string
+          id?: string
+          invited_by: string
+          role?: string
+          status?: string
+          token: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          avatar_color?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          family_id?: string
+          id?: string
+          invited_by?: string
+          role?: string
+          status?: string
+          token?: string
+        }
+        Relationships: []
+      }
       family_members: {
         Row: {
           auth_user_id: string
@@ -381,6 +426,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_family_invitation: { Args: { p_token: string }; Returns: string }
       create_family_for_current_user: {
         Args: {
           p_city: string
@@ -391,6 +437,10 @@ export type Database = {
           p_member_role: string
           p_timezone: string
         }
+        Returns: string
+      }
+      create_family_invitation: {
+        Args: { p_avatar_color: string; p_email: string; p_role: string }
         Returns: string
       }
       current_family_id: { Args: never; Returns: string }
