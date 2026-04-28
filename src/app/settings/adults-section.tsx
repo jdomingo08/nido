@@ -195,13 +195,7 @@ function InvitationRow({ invitation, canRevoke }: { invitation: Invitation; canR
   )
 }
 
-function InviteForm({
-  onSubmitted,
-  onCancel
-}: {
-  onSubmitted: () => void
-  onCancel: () => void
-}) {
+function InviteForm({ onSubmitted, onCancel }: { onSubmitted: () => void; onCancel: () => void }) {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<(typeof ROLE_OPTIONS)[number]>('partner')
   const [avatarColor, setAvatarColor] = useState<(typeof COLOR_OPTIONS)[number]>('aqua')

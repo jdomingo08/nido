@@ -19,13 +19,19 @@ export function isoDate(date: Date): string {
 }
 
 export async function getCurrentWeekPlan(familyId: string): Promise<WeekPlan | null> {
+  return getWeekPlan(familyId, isoDate(mostRecentMonday(new Date())))
+}
+
+export async function getWeekPlan(
+  familyId: string,
+  weekStartIso: string
+): Promise<WeekPlan | null> {
   const supabase = await createSupabaseServerClient()
-  const weekStart = isoDate(mostRecentMonday(new Date()))
   const { data } = await supabase
     .from('week_plans')
     .select('*')
     .eq('family_id', familyId)
-    .eq('week_start_date', weekStart)
+    .eq('week_start_date', weekStartIso)
     .maybeSingle()
   return data
 }

@@ -14,7 +14,7 @@ const DAY_FULL: Record<DayId, string> = {
   sun: 'sunday'
 }
 
-export function RegenerateDayButton({ day }: { day: DayId }) {
+export function RegenerateDayButton({ day, weekStartIso }: { day: DayId; weekStartIso?: string }) {
   const [confirming, setConfirming] = useState(false)
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -23,7 +23,7 @@ export function RegenerateDayButton({ day }: { day: DayId }) {
     setError(null)
     startTransition(async () => {
       try {
-        await regenerateDay(day)
+        await regenerateDay(day, weekStartIso)
         setConfirming(false)
       } catch (e) {
         setError(e instanceof Error ? e.message : 'something went wrong')

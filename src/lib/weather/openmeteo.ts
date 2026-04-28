@@ -70,6 +70,49 @@ export async function fetchForecastForCity(args: {
   }
 }
 
+export type CurrentWeather = {
+  city: string
+  code: number
+  icon: WeatherIcon
+  label: string
+  temp_f: number
+  temp_c: number
+}
+
+// "Right now" weather for the sidebar card. Single Open-Meteo call.
+// Returns null on any failure — caller renders a neutral fallback.
+export async function fetchCurrentWeatherForCity(
+  city: string | null | undefined
+): Promise<CurrentWeather | null> {
+  if (!city) return null
+  try {
+    const coords = await geocodeCity(city)
+    if (!coords) return null
+    const url = new URL('https://api.open-meteo.com/v1/forecast')
+    url.searchParams.set('latitude', String(coords.lat))
+    url.searchParams.set('longitude', String(coords.lon))
+    url.searchParams.set('current', 'temperature_2m,weather_code')
+    url.searchParams.set('temperature_unit', 'fahrenheit')
+    const res = await fetch(url.toString(), { next: { revalidate: 600 } })
+    if (!res.ok) return null
+    const data = (await res.json()) as {
+      current?: { temperature_2m?: number; weather_code?: number }
+    }
+    const code = data.current?.weather_code ?? 0
+    const tempF = Math.round(data.current?.temperature_2m ?? 0)
+    return {
+      city: city.split(',')[0]?.trim() || city,
+      code,
+      icon: codeToIcon(code),
+      label: codeToLabel(code),
+      temp_f: tempF,
+      temp_c: Math.round(((tempF - 32) * 5) / 9)
+    }
+  } catch {
+    return null
+  }
+}
+
 export async function fetchWeekForecast(args: {
   lat: number
   lon: number

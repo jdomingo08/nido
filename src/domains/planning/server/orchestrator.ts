@@ -327,15 +327,26 @@ export async function generateCurrentWeek(): Promise<{
   weekPlanId: string
   activityCount: number
 }> {
+  return planWeek()
+}
+
+// Plan a week's skeleton for an arbitrary Monday. Without a date, defaults
+// to the most recent Monday relative to "now". Used by the dashboard's
+// prev/next/plan-next-week navigation as well as the original first-time
+// "generate this week" flow.
+export async function planWeek(weekStartIso?: string): Promise<{
+  weekPlanId: string
+  activityCount: number
+}> {
   try {
-    return await generateCurrentWeekInner()
+    return await planWeekInner(weekStartIso ?? isoDate(mostRecentMonday(new Date())))
   } catch (e) {
-    console.error('[orchestrator] generateCurrentWeek failed:', e)
+    console.error(`[orchestrator] planWeek(${weekStartIso ?? 'current'}) failed:`, e)
     throw e
   }
 }
 
-async function generateCurrentWeekInner(): Promise<{
+async function planWeekInner(weekStartIso: string): Promise<{
   weekPlanId: string
   activityCount: number
 }> {
@@ -362,7 +373,9 @@ async function generateCurrentWeekInner(): Promise<{
   const constraints = (prefs ?? []).filter((p) => p.kind === 'constraint').map((p) => p.text)
   const dislikes = (prefs ?? []).filter((p) => p.kind === 'dislike').map((p) => p.text)
 
-  const weekStartIso = isoDate(mostRecentMonday(new Date()))
+  // weekStartIso is the canonical Monday string; build a Date from it for
+  // any helper that wants a Date object.
+  const weekStartDate = new Date(weekStartIso + 'T12:00:00')
 
   const { data: existing } = await supabase
     .from('week_plans')
@@ -395,7 +408,7 @@ async function generateCurrentWeekInner(): Promise<{
         forecast = await fetchWeekForecast({
           lat: coords.lat,
           lon: coords.lon,
-          startDate: mostRecentMonday(new Date())
+          startDate: weekStartDate
         })
       }
     } catch {
@@ -404,10 +417,7 @@ async function generateCurrentWeekInner(): Promise<{
   }
 
   // Pull personal activities so the orchestrator respects the household calendar.
-  const personalActivities = await getPersonalActivitiesForWeek(
-    family.id,
-    mostRecentMonday(new Date())
-  )
+  const personalActivities = await getPersonalActivitiesForWeek(family.id, weekStartDate)
 
   const systemPrompt = buildSystemPrompt(family.locale)
   const userPrompt = buildUserPrompt({
@@ -522,15 +532,15 @@ function clampInt(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, Math.round(n)))
 }
 
-// Wipes the current week (cascade deletes activities) and runs the orchestrator
+// Wipes a week's plan (cascade deletes activities) and runs the orchestrator
 // again. Use sparingly — every call costs ~$0.10–0.30 and writes to the LLM ledger.
-export async function regenerateCurrentWeek(): Promise<{
+export async function regenerateCurrentWeek(weekStartIso?: string): Promise<{
   weekPlanId: string
   activityCount: number
 }> {
   const { family } = await requireFamily()
   const supabase = await createSupabaseServerClient()
-  const weekStart = isoDate(mostRecentMonday(new Date()))
+  const weekStart = weekStartIso ?? isoDate(mostRecentMonday(new Date()))
 
   const { error: delError } = await supabase
     .from('week_plans')
@@ -542,28 +552,35 @@ export async function regenerateCurrentWeek(): Promise<{
     throw new Error(`Failed to clear current week: ${delError.message}`)
   }
 
-  return generateCurrentWeek()
+  return planWeek(weekStart)
 }
 
 // ─── Phase B: hydrate one day's skeleton activities ────────────
 
-export async function hydrateDay(day: (typeof DAY_KEYS)[number]): Promise<{ hydrated: number }> {
+export async function hydrateDay(
+  day: (typeof DAY_KEYS)[number],
+  weekStartIso?: string
+): Promise<{ hydrated: number }> {
+  const target = weekStartIso ?? isoDate(mostRecentMonday(new Date()))
   try {
-    return await hydrateDayInner(day)
+    return await hydrateDayInner(day, target)
   } catch (e) {
-    console.error(`[orchestrator] hydrateDay(${day}) failed:`, e)
+    console.error(`[orchestrator] hydrateDay(${day}, ${target}) failed:`, e)
     throw e
   }
 }
 
-async function hydrateDayInner(day: (typeof DAY_KEYS)[number]): Promise<{ hydrated: number }> {
+async function hydrateDayInner(
+  day: (typeof DAY_KEYS)[number],
+  weekStartIso: string
+): Promise<{ hydrated: number }> {
   if (!(DAY_KEYS as readonly string[]).includes(day)) {
     throw new Error(`Invalid day: ${day}`)
   }
 
   const { family } = await requireFamily()
   const supabase = await createSupabaseServerClient()
-  const weekStartIso = isoDate(mostRecentMonday(new Date()))
+  const weekStartDate = new Date(weekStartIso + 'T12:00:00')
 
   const { data: weekPlan } = await supabase
     .from('week_plans')
@@ -603,10 +620,7 @@ async function hydrateDayInner(day: (typeof DAY_KEYS)[number]): Promise<{ hydrat
   const constraints = (prefs ?? []).filter((p) => p.kind === 'constraint').map((p) => p.text)
   const dislikes = (prefs ?? []).filter((p) => p.kind === 'dislike').map((p) => p.text)
 
-  const personalActivities = await getPersonalActivitiesForWeek(
-    family.id,
-    mostRecentMonday(new Date())
-  )
+  const personalActivities = await getPersonalActivitiesForWeek(family.id, weekStartDate)
   const personalForDay = personalActivities.filter((p) => p.resolved_day === day)
 
   const forecastForWeek = parseForecastJson(weekPlan.weather_forecast)
@@ -811,18 +825,21 @@ const DAY_LABEL: Record<(typeof DAY_KEYS)[number], string> = {
 }
 
 export async function regenerateDay(
-  day: (typeof DAY_KEYS)[number]
+  day: (typeof DAY_KEYS)[number],
+  weekStartIso?: string
 ): Promise<{ activityCount: number }> {
+  const target = weekStartIso ?? isoDate(mostRecentMonday(new Date()))
   try {
-    return await regenerateDayInner(day)
+    return await regenerateDayInner(day, target)
   } catch (e) {
-    console.error(`[orchestrator] regenerateDay(${day}) failed:`, e)
+    console.error(`[orchestrator] regenerateDay(${day}, ${target}) failed:`, e)
     throw e
   }
 }
 
 async function regenerateDayInner(
-  day: (typeof DAY_KEYS)[number]
+  day: (typeof DAY_KEYS)[number],
+  weekStartIso: string
 ): Promise<{ activityCount: number }> {
   if (!(DAY_KEYS as readonly string[]).includes(day)) {
     throw new Error(`Invalid day: ${day}`)
@@ -830,7 +847,7 @@ async function regenerateDayInner(
 
   const { family } = await requireFamily()
   const supabase = await createSupabaseServerClient()
-  const weekStartIso = isoDate(mostRecentMonday(new Date()))
+  const weekStartDate = new Date(weekStartIso + 'T12:00:00')
 
   const { data: weekPlan } = await supabase
     .from('week_plans')
@@ -860,10 +877,7 @@ async function regenerateDayInner(
   const constraints = (prefs ?? []).filter((p) => p.kind === 'constraint').map((p) => p.text)
   const dislikes = (prefs ?? []).filter((p) => p.kind === 'dislike').map((p) => p.text)
 
-  const personalActivities = await getPersonalActivitiesForWeek(
-    family.id,
-    mostRecentMonday(new Date())
-  )
+  const personalActivities = await getPersonalActivitiesForWeek(family.id, weekStartDate)
   const personalForDay = personalActivities.filter((p) => p.resolved_day === day)
 
   const forecastForWeek = parseForecastJson(weekPlan.weather_forecast)
