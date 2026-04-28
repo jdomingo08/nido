@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { DAY_LABELS, DAYS, type Activity, type DayId } from '@/domains/planning/server/queries'
 import type { ScheduledPersonalActivity } from '@/domains/personal/server/queries'
-import type { DayForecast, WeatherIcon } from '@/lib/weather/openmeteo'
+import type { DayForecast, PartForecast, WeatherIcon } from '@/lib/weather/openmeteo'
 
 const ICON_GLYPH: Record<WeatherIcon, string> = {
   sun: '☀',
@@ -48,13 +48,10 @@ export function WeekSummary({
             </div>
 
             {forecast && (
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-2xl leading-none">
-                  {ICON_GLYPH[forecast.parts.afternoon.icon] ?? '·'}
-                </span>
-                <span className="font-mono text-[11px] tracking-widest uppercase opacity-70">
-                  {forecast.parts.afternoon.temp_f}°
-                </span>
+              <div className="mt-2 grid grid-cols-3 gap-1 rounded-lg border border-[#16121A]/30 bg-[#F5ECDC] p-1.5">
+                <PartCell label="M" part={forecast.parts.morning} />
+                <PartCell label="A" part={forecast.parts.afternoon} />
+                <PartCell label="E" part={forecast.parts.evening} />
               </div>
             )}
 
@@ -91,6 +88,16 @@ export function WeekSummary({
           </Link>
         )
       })}
+    </div>
+  )
+}
+
+function PartCell({ label, part }: { label: string; part: PartForecast }) {
+  return (
+    <div className="flex flex-col items-center gap-0.5 leading-none">
+      <span className="font-mono text-[8px] tracking-widest uppercase opacity-50">{label}</span>
+      <span className="text-base">{ICON_GLYPH[part.icon] ?? '·'}</span>
+      <span className="font-mono text-[9px] font-bold tracking-tight">{part.temp_f}°</span>
     </div>
   )
 }
