@@ -49,7 +49,7 @@ const KidSchema = z.object({
   name: z.string().min(1).max(100),
   age: z.number().int().min(0).max(18),
   color: z.string().min(1).max(40),
-  tags: z.array(z.string().max(50)).max(10)
+  tags: z.array(z.string().max(200)).max(10)
 })
 
 export type KidInput = z.infer<typeof KidSchema>
