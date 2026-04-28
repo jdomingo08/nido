@@ -81,18 +81,75 @@ const Activity = z.object({
 // return one day and call it done — the schema can't enforce 7 entries
 // reliably across structured-output validators.
 const DayActivities = z.array(Activity).min(2).max(8)
-
-const WeekPlan = z.object({
-  mon: DayActivities,
-  tue: DayActivities,
-  wed: DayActivities,
-  thu: DayActivities,
-  fri: DayActivities,
-  sat: DayActivities,
-  sun: DayActivities
-})
+// (DayActivities is still used by the single-day regenerate path which
+// stays as a one-shot full-content call — that fits the timeout for 1 day.)
 
 const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
+
+// ─── Two-phase schemas ─────────────────────────────────────────
+// Skeleton: just the structural fields (title, bucket, age, time, kids).
+// One LLM call generates the whole week so cross-day decisions (bucket
+// balance, methodology blend, theme variety) stay coherent. Output is
+// small per activity so the call fits well under the 60s function ceiling.
+
+const SkeletonActivity = z.object({
+  title: z.string(),
+  bucket: z.enum(['quiet', 'focus', 'deep', 'active', 'creative', 'social', 'outdoor', 'screen']),
+  methodology: z.enum([
+    'montessori',
+    'reggio',
+    'waldorf',
+    'play-based',
+    'outdoor',
+    'stem',
+    'mixed'
+  ]),
+  age_min: z.number().int(),
+  age_max: z.number().int(),
+  duration_min: z.number().int(),
+  start_hour: z.number().int(),
+  kid_indices: z.array(z.number().int()),
+  weather_suitable: z.array(z.enum(['sunny', 'rainy', 'cold']))
+})
+
+const SkeletonDayActivities = z.array(SkeletonActivity).min(2).max(6)
+
+const SkeletonWeek = z.object({
+  mon: SkeletonDayActivities,
+  tue: SkeletonDayActivities,
+  wed: SkeletonDayActivities,
+  thu: SkeletonDayActivities,
+  fri: SkeletonDayActivities,
+  sat: SkeletonDayActivities,
+  sun: SkeletonDayActivities
+})
+
+// Hydration: rich prose fields per activity, keyed by id so we can update
+// the right database row. One call per day, fired in parallel from the
+// client so the wall-clock total stays around 15s.
+
+const HydratedActivity = z.object({
+  id: z.string(),
+  summary: z.string(),
+  prep_time_min: z.number().int(),
+  skills_developed: z.array(z.string()),
+  materials: z.array(Material),
+  setup: z.string(),
+  execution_steps: z.array(ExecutionStep),
+  variations: Variations,
+  troubleshooting: z.string(),
+  cleanup: z.string(),
+  safety_notes: z.string(),
+  signs_it_worked: z.string(),
+  badges: z.array(z.string()),
+  reasoning: z.string(),
+  inspiration_source: z.string(),
+  inspiration_detail: z.string()
+})
+
+const DayHydration = z.object({
+  activities: z.array(HydratedActivity)
+})
 
 // ─── Prompt construction ───────────────────────────────────────
 
@@ -372,13 +429,16 @@ async function generateCurrentWeekInner(): Promise<{
 
   const openai = getOpenAIClient()
 
+  // Phase A: skeleton only — small per-activity output keeps the call inside
+  // the 60s function ceiling. Rich content is filled in by `hydrateDay()`,
+  // called from the client in parallel after this returns.
   const completion = await openai.chat.completions.parse({
     model: OPENAI_MODELS.orchestrate,
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
     ],
-    response_format: zodResponseFormat(WeekPlan, 'week_plan')
+    response_format: zodResponseFormat(SkeletonWeek, 'week_skeleton')
   })
 
   const parsed = completion.choices[0]?.message.parsed
@@ -394,7 +454,7 @@ async function generateCurrentWeekInner(): Promise<{
     tokens_in: completion.usage?.prompt_tokens ?? 0,
     tokens_out: completion.usage?.completion_tokens ?? 0,
     cost_usd: cost,
-    purpose: 'orchestrate_week'
+    purpose: 'orchestrate_week_skeleton'
   })
 
   const { data: weekPlan, error: wpErr } = await supabase
@@ -424,6 +484,8 @@ async function generateCurrentWeekInner(): Promise<{
 
       if (kid_ids.length === 0) continue
 
+      // Skeleton row: only structural fields. Rich fields stay null/default
+      // until hydrateDay() fills them.
       rows.push({
         week_plan_id: weekPlan.id,
         family_id: family.id,
@@ -432,27 +494,12 @@ async function generateCurrentWeekInner(): Promise<{
         duration_min: clampInt(a.duration_min, 5, 180),
         kid_ids,
         title: a.title,
-        summary: a.summary || null,
         bucket: a.bucket,
         methodology: a.methodology,
         age_min: a.age_min,
         age_max: a.age_max,
-        prep_time_min: a.prep_time_min,
-        skills_developed: a.skills_developed,
-        materials: a.materials,
-        setup: a.setup || null,
-        execution_steps: a.execution_steps,
-        variations: a.variations,
-        troubleshooting: a.troubleshooting || null,
-        cleanup: a.cleanup || null,
-        safety_notes: a.safety_notes || null,
-        signs_it_worked: a.signs_it_worked || null,
         weather_suitable: a.weather_suitable,
-        status: 'proposed',
-        badges: a.badges,
-        reasoning: a.reasoning || null,
-        inspiration_source: a.inspiration_source || null,
-        inspiration_detail: a.inspiration_detail || null
+        status: 'proposed'
       })
     }
   }
@@ -496,6 +543,259 @@ export async function regenerateCurrentWeek(): Promise<{
   }
 
   return generateCurrentWeek()
+}
+
+// ─── Phase B: hydrate one day's skeleton activities ────────────
+
+export async function hydrateDay(
+  day: (typeof DAY_KEYS)[number]
+): Promise<{ hydrated: number }> {
+  try {
+    return await hydrateDayInner(day)
+  } catch (e) {
+    console.error(`[orchestrator] hydrateDay(${day}) failed:`, e)
+    throw e
+  }
+}
+
+async function hydrateDayInner(
+  day: (typeof DAY_KEYS)[number]
+): Promise<{ hydrated: number }> {
+  if (!(DAY_KEYS as readonly string[]).includes(day)) {
+    throw new Error(`Invalid day: ${day}`)
+  }
+
+  const { family } = await requireFamily()
+  const supabase = await createSupabaseServerClient()
+  const weekStartIso = isoDate(mostRecentMonday(new Date()))
+
+  const { data: weekPlan } = await supabase
+    .from('week_plans')
+    .select('*')
+    .eq('family_id', family.id)
+    .eq('week_start_date', weekStartIso)
+    .maybeSingle()
+
+  if (!weekPlan) {
+    throw new Error('No week plan to hydrate. Generate the week first.')
+  }
+
+  // Only hydrate rows that haven't been filled in yet.
+  const { data: skeletons } = await supabase
+    .from('activities')
+    .select('id, title, bucket, methodology, age_min, age_max, duration_min, kid_ids, start_hour')
+    .eq('week_plan_id', weekPlan.id)
+    .eq('day', day)
+    .is('summary', null)
+    .order('start_hour')
+
+  if (!skeletons || skeletons.length === 0) {
+    return { hydrated: 0 }
+  }
+
+  const { data: kids } = await supabase
+    .from('kids')
+    .select('*')
+    .eq('family_id', family.id)
+    .order('created_at', { ascending: true })
+
+  const { data: prefs } = await supabase
+    .from('family_preferences')
+    .select('*')
+    .eq('family_id', family.id)
+
+  const constraints = (prefs ?? []).filter((p) => p.kind === 'constraint').map((p) => p.text)
+  const dislikes = (prefs ?? []).filter((p) => p.kind === 'dislike').map((p) => p.text)
+
+  const personalActivities = await getPersonalActivitiesForWeek(
+    family.id,
+    mostRecentMonday(new Date())
+  )
+  const personalForDay = personalActivities.filter((p) => p.resolved_day === day)
+
+  const forecastForWeek = parseForecastJson(weekPlan.weather_forecast)
+  const forecastForDay = forecastForWeek.find((f) => f.day === day) ?? null
+
+  const skeletonsWithKidNames = skeletons.map((a) => ({
+    id: a.id,
+    title: a.title,
+    bucket: a.bucket,
+    methodology: a.methodology ?? 'mixed',
+    age_min: a.age_min ?? 0,
+    age_max: a.age_max ?? 18,
+    duration_min: a.duration_min,
+    kid_names: a.kid_ids
+      .map((id) => kids?.find((k) => k.id === id)?.name ?? null)
+      .filter((n): n is string => Boolean(n))
+  }))
+
+  const systemPrompt = buildHydrationSystemPrompt(family.locale)
+  const userPrompt = buildHydrationUserPrompt({
+    day,
+    activities: skeletonsWithKidNames,
+    family_methodologies: family.methodologies,
+    forecastForDay,
+    personalForDay,
+    constraints,
+    dislikes
+  })
+
+  const openai = getOpenAIClient()
+
+  const completion = await openai.chat.completions.parse({
+    model: OPENAI_MODELS.orchestrate,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ],
+    response_format: zodResponseFormat(DayHydration, 'day_hydration')
+  })
+
+  const parsed = completion.choices[0]?.message.parsed
+  if (!parsed) {
+    throw new Error('LLM returned no hydration output')
+  }
+
+  const cost = calculateCost(OPENAI_MODELS.orchestrate, completion.usage)
+  const admin = getSupabaseAdminClient()
+  await admin.from('llm_calls').insert({
+    family_id: family.id,
+    model: OPENAI_MODELS.orchestrate,
+    tokens_in: completion.usage?.prompt_tokens ?? 0,
+    tokens_out: completion.usage?.completion_tokens ?? 0,
+    cost_usd: cost,
+    purpose: `hydrate_day_${day}`
+  })
+
+  // Update each skeleton row with hydrated content. Hallucinated ids are ignored.
+  const validIds = new Set(skeletons.map((s) => s.id))
+  let updated = 0
+  for (const h of parsed.activities) {
+    if (!validIds.has(h.id)) continue
+    const { error } = await supabase
+      .from('activities')
+      .update({
+        summary: h.summary || null,
+        prep_time_min: h.prep_time_min ?? 0,
+        skills_developed: h.skills_developed,
+        materials: h.materials,
+        setup: h.setup || null,
+        execution_steps: h.execution_steps,
+        variations: h.variations,
+        troubleshooting: h.troubleshooting || null,
+        cleanup: h.cleanup || null,
+        safety_notes: h.safety_notes || null,
+        signs_it_worked: h.signs_it_worked || null,
+        badges: h.badges,
+        reasoning: h.reasoning || null,
+        inspiration_source: h.inspiration_source || null,
+        inspiration_detail: h.inspiration_detail || null
+      })
+      .eq('id', h.id)
+    if (!error) updated++
+  }
+
+  revalidatePath('/dashboard', 'layout')
+  return { hydrated: updated }
+}
+
+function buildHydrationSystemPrompt(locale: string): string {
+  return `You are hydrating skeleton activities into rich, parent-ready content for Needle.
+
+Voice & style:
+- Output strictly in ${locale === 'es' ? 'Spanish' : 'English'}.
+- Lowercase, warm, specific. Parent-at-the-playground tone, not teacher-y.
+- Concrete over abstract: "a bowl of dry beans + 3 tiny cups + a tray" beats "sensory materials".
+
+For each input activity, return rich content with the SAME id.
+
+Field guidance:
+- summary: 1-2 sentences — what + why.
+- prep_time_min: realistic prep time, 0 if no prep.
+- skills_developed: 2-4 short tags ("fine motor", "color recognition", "executive function").
+- materials: realistic items found at home; quantity + brief note; substitutions when obscure.
+- setup: short paragraph on arranging the space.
+- execution_steps: 3-5 steps. Each has \`instruction\` (what to do), \`parent_script\` (one literal sentence the parent says), \`duration_est_min\`.
+- variations: { easier, harder } — short adaptations.
+- troubleshooting: short paragraph for "what if kid loses interest".
+- cleanup: brief.
+- safety_notes: only if relevant.
+- signs_it_worked: one sentence on engagement signals.
+- badges: 2-3 short tags ("post-nap", "sunny", "fine-motor", etc.) — when forecast or context drove the choice.
+- reasoning: one sentence naming which agent perspective was loudest.
+- inspiration_source: short pedagogical lineage tag (e.g. "montessori practical life").
+- inspiration_detail: 3-5 sentences on tradition, skill development, age fit. NO fake citations or invented studies.
+
+HARD RULES:
+- Don't invent study names, citations, paper titles, or URLs.
+- Respect the family's hard constraints (allergies, nap times) — never propose materials/steps that violate them.
+- Avoid items in the family's dislikes list.
+
+Output strictly the JSON schema. Match each input id exactly.`
+}
+
+function buildHydrationUserPrompt(args: {
+  day: (typeof DAY_KEYS)[number]
+  activities: Array<{
+    id: string
+    title: string
+    bucket: string
+    methodology: string
+    age_min: number
+    age_max: number
+    duration_min: number
+    kid_names: string[]
+  }>
+  family_methodologies: string[]
+  forecastForDay: DayForecast | null
+  personalForDay: ScheduledPersonalActivity[]
+  constraints: string[]
+  dislikes: string[]
+}): string {
+  const list = args.activities
+    .map(
+      (a, i) =>
+        `${i + 1}. id="${a.id}" — "${a.title}" · ${a.bucket} · ${a.methodology} · age ${a.age_min}-${a.age_max} · ${a.duration_min}m · for ${a.kid_names.join(' + ') || 'family'}`
+    )
+    .join('\n')
+
+  const constraintLines =
+    args.constraints.length > 0 ? args.constraints.map((c) => `- ${c}`).join('\n') : '- (none)'
+  const dislikeLines =
+    args.dislikes.length > 0 ? args.dislikes.map((d) => `- ${d}`).join('\n') : '- (none)'
+
+  const forecastBlock = args.forecastForDay
+    ? `${args.forecastForDay.parts.morning.label} ${args.forecastForDay.parts.morning.temp_f}° / ${args.forecastForDay.parts.afternoon.label} ${args.forecastForDay.parts.afternoon.temp_f}° / ${args.forecastForDay.parts.evening.label} ${args.forecastForDay.parts.evening.temp_f}°`
+    : '(no forecast available)'
+
+  const personalBlock =
+    args.personalForDay.length === 0
+      ? '(parent fully available all day)'
+      : args.personalForDay
+          .map((p) => {
+            const start = Number(p.start_hour)
+            return `- ${formatHour(start)}–${formatHour(start + p.duration_min / 60)}: ${p.title} (${p.category})`
+          })
+          .join('\n')
+
+  return `Hydrate these activities for ${DAY_LABEL[args.day]}:
+
+${list}
+
+Family methodologies: ${methodologyLine(args.family_methodologies)}
+
+Hard constraints (respect strictly):
+${constraintLines}
+
+Dislikes (avoid):
+${dislikeLines}
+
+Today's weather (morning / afternoon / evening): ${forecastBlock}
+
+Today's parent calendar:
+${personalBlock}
+
+Return rich content for each activity. Use the same id for each.`
 }
 
 // ─── Single-day regenerate ─────────────────────────────────────
