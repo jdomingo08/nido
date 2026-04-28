@@ -14,6 +14,8 @@ import { movePersonalActivity } from '@/domains/personal/server/actions'
 import type { Activity } from '@/domains/planning/server/queries'
 import type { ScheduledPersonalActivity } from '@/domains/personal/server/queries'
 import type { Tables } from '@/lib/supabase/database.types'
+import type { HourlyForecast } from '@/lib/weather/openmeteo'
+import { WeatherIconSvg } from '../weather-icon'
 import { TimelineKidCard, TimelinePersonalCard, ActivityDetailDrawer } from './timeline-card'
 
 type Kid = Tables<'kids'>
@@ -84,12 +86,14 @@ export function DayTimeline({
   activities,
   personal,
   kids,
-  agentLevel
+  agentLevel,
+  hourly
 }: {
   activities: Activity[]
   personal: ScheduledPersonalActivity[]
   kids: Kid[]
   agentLevel: string
+  hourly?: HourlyForecast[]
 }) {
   // Local optimistic copies — drag updates these instantly; server-revalidated
   // props are synced in via the derive-state-during-render pattern (React 19
@@ -156,12 +160,16 @@ export function DayTimeline({
   return (
     <>
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="mt-6 grid grid-cols-[60px_1fr_1fr] rounded-2xl border-2 border-[#16121A] bg-[#FBF5E8] p-3 shadow-[3px_3px_0_#16121A]">
-          <div className="col-span-3 mb-3 grid grid-cols-[60px_1fr_1fr] gap-2 border-b border-[#16121A]/30 pb-2">
+        <div className="mt-6 grid grid-cols-[36px_60px_1fr_1fr] rounded-2xl border-2 border-[#16121A] bg-[#FBF5E8] p-3 shadow-[3px_3px_0_#16121A]">
+          <div className="col-span-4 mb-3 grid grid-cols-[36px_60px_1fr_1fr] gap-2 border-b border-[#16121A]/30 pb-2">
+            <div />
             <div />
             <div className="font-mono text-[11px] tracking-widest uppercase opacity-60">you</div>
             <div className="font-mono text-[11px] tracking-widest uppercase opacity-60">kids</div>
           </div>
+
+          {/* hourly weather column */}
+          <HourlyWeatherColumn hourly={hourly} totalHeight={totalHeight} />
 
           {/* time gutter */}
           <div className="relative" style={{ height: totalHeight }}>
@@ -343,6 +351,39 @@ function laneToBox(lane: number, totalLanes: number): { left: string; width: str
     left: `calc(${(lane * 100) / totalLanes}% + ${inset}px + ${(gutterPx * lane) / totalLanes}px)`,
     width: `calc(${100 / totalLanes}% - ${inset * 2 + gutterTotal / totalLanes}px)`
   }
+}
+
+// Vertical column of weather icons aligned to each hour line (6am-10pm).
+// Renders nothing if hourly data is missing — old weeks generated before the
+// hourly field was added simply won't show this column's icons, but the
+// rest of the grid still works.
+function HourlyWeatherColumn({
+  hourly,
+  totalHeight
+}: {
+  hourly?: HourlyForecast[]
+  totalHeight: number
+}) {
+  const byHour = new Map<number, HourlyForecast>()
+  for (const h of hourly ?? []) byHour.set(h.hour, h)
+
+  return (
+    <div className="relative" style={{ height: totalHeight }}>
+      {HOURS.map((h) => {
+        const entry = byHour.get(h)
+        if (!entry) return null
+        return (
+          <div
+            key={h}
+            className="absolute flex items-center justify-center"
+            style={{ top: hourToY(h) - 10, left: 0, right: 4, height: 20 }}
+          >
+            <WeatherIconSvg icon={entry.icon} size={20} />
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 function HourLines() {

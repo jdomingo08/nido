@@ -14,7 +14,7 @@ import {
 } from '@/domains/planning/server/queries'
 import { getPersonalActivitiesForWeek } from '@/domains/personal/server/queries'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import type { DayForecast } from '@/lib/weather/openmeteo'
+import { fetchForecastForCity, type DayForecast } from '@/lib/weather/openmeteo'
 import { WeatherStrip } from '../weather-strip'
 import { DayTimeline } from './day-timeline'
 import { RegenerateDayButton } from './regenerate-day-button'
@@ -41,7 +41,20 @@ export default async function DayPage({ params }: { params: Promise<{ day: strin
 
   const todays = activities.filter((a) => a.day === day)
   const todaysPersonal = personalActivities.filter((p) => p.resolved_day === day)
-  const forecast = parseForecast(weekPlan?.weather_forecast).find((f) => f.day === day)
+
+  // See dashboard/page.tsx for the resolution order. Same fallback here so
+  // the hourly column populates even on weeks generated before the field
+  // was added.
+  let weekForecast = parseForecast(weekPlan?.weather_forecast)
+  const needsLive = weekForecast.length === 0 || !weekForecast[0]?.hourly
+  if (needsLive && family.city) {
+    const live = await fetchForecastForCity({
+      city: family.city,
+      startDate: mostRecentMonday(new Date())
+    })
+    if (live.length > 0) weekForecast = live
+  }
+  const forecast = weekForecast.find((f) => f.day === day)
   const weekStartDate = weekPlan?.week_start_date
 
   return (
@@ -95,6 +108,7 @@ export default async function DayPage({ params }: { params: Promise<{ day: strin
           personal={todaysPersonal}
           kids={kids ?? []}
           agentLevel={family.agent_level}
+          hourly={forecast?.hourly}
         />
       </div>
     </main>

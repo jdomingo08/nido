@@ -19,7 +19,7 @@ import {
   getPersonalActivitiesForWeek,
   type ScheduledPersonalActivity
 } from '@/domains/personal/server/queries'
-import type { DayForecast } from '@/lib/weather/openmeteo'
+import { fetchForecastForCity, type DayForecast } from '@/lib/weather/openmeteo'
 import { GenerateWeekButton } from './generate-week-button'
 import { RegenerateWeekButton } from './regenerate-week-button'
 import { AddPersonalActivityButton } from './add-personal-activity-button'
@@ -36,7 +36,21 @@ export default async function DashboardPage() {
 
   const byDay = groupByDay(activities)
   const personalByDay = groupPersonalByDay(personalActivities)
-  const forecast = parseForecast(weekPlan?.weather_forecast)
+
+  // Forecast resolution order:
+  //   1. Saved JSON on the week_plan (cheapest)
+  //   2. Live Open-Meteo lookup if saved JSON is missing or pre-dates the
+  //      hourly field (so weeks generated before this feature was wired
+  //      still show weather without forcing a regen).
+  let forecast = parseForecast(weekPlan?.weather_forecast)
+  const needsLive = forecast.length === 0 || !forecast[0]?.hourly
+  if (needsLive && family.city) {
+    const live = await fetchForecastForCity({
+      city: family.city,
+      startDate: mostRecentMonday(new Date())
+    })
+    if (live.length > 0) forecast = live
+  }
   const forecastByDay = new Map<DayId, DayForecast>(forecast.map((d) => [d.day, d]))
 
   return (

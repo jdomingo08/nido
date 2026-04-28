@@ -15,15 +15,28 @@ export type PartForecast = {
 
 export type DayPart = 'morning' | 'afternoon' | 'evening'
 
+// One forecast entry per hour. Used by the day-timeline hourly column.
+export type HourlyForecast = {
+  hour: number // 0-23
+  code: number
+  icon: WeatherIcon
+  temp_f: number
+}
+
 export type DayForecast = {
   day: DayId
   date: string // YYYY-MM-DD
   parts: Record<DayPart, PartForecast>
+  hourly?: HourlyForecast[] // hours 6-22 (timeline visible range); optional for backwards compat with weeks generated before this field was added.
 }
 
 export async function geocodeCity(city: string): Promise<{ lat: number; lon: number } | null> {
+  // Open-Meteo geocoding only takes a single city term — strip a trailing
+  // ", state" / ",state" suffix so "Doral,FL" or "Miami, FL" still resolves.
+  const cleaned = city.split(',')[0]?.trim() || city.trim()
+  if (!cleaned) return null
   const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
-    city
+    cleaned
   )}&count=1&language=en`
   try {
     const res = await fetch(url, { next: { revalidate: 86400 } })
@@ -34,6 +47,26 @@ export async function geocodeCity(city: string): Promise<{ lat: number; lon: num
     return { lat: first.latitude, lon: first.longitude }
   } catch {
     return null
+  }
+}
+
+// Convenience for the dashboard / day pages: fetch a fresh 7-day forecast
+// from a city name. Returns [] if anything fails — never throws.
+export async function fetchForecastForCity(args: {
+  city: string | null | undefined
+  startDate: Date
+}): Promise<DayForecast[]> {
+  if (!args.city) return []
+  try {
+    const coords = await geocodeCity(args.city)
+    if (!coords) return []
+    return await fetchWeekForecast({
+      lat: coords.lat,
+      lon: coords.lon,
+      startDate: args.startDate
+    })
+  } catch {
+    return []
   }
 }
 
@@ -86,6 +119,18 @@ export async function fetchWeekForecast(args: {
   for (const [dateKey, bucket] of byDate) {
     const date = new Date(`${dateKey}T12:00:00`)
     const dayId = dayIds[date.getDay()] ?? 'mon'
+
+    const hourly: HourlyForecast[] = []
+    for (let i = 0; i < bucket.hours.length; i++) {
+      const h = bucket.hours[i]
+      if (h === undefined) continue
+      if (h < 6 || h > 22) continue
+      const code = bucket.codes[i] ?? 0
+      const tempF = bucket.temps[i] ?? 0
+      hourly.push({ hour: h, code, icon: codeToIcon(code), temp_f: Math.round(tempF) })
+    }
+    hourly.sort((a, b) => a.hour - b.hour)
+
     result.push({
       day: dayId,
       date: dateKey,
@@ -93,7 +138,8 @@ export async function fetchWeekForecast(args: {
         morning: aggregatePart(bucket, 6, 12),
         afternoon: aggregatePart(bucket, 12, 18),
         evening: aggregatePart(bucket, 18, 22)
-      }
+      },
+      hourly
     })
   }
 
