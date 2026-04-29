@@ -14,10 +14,7 @@ import {
   type ScheduledPersonalActivity
 } from '@/domains/personal/server/queries'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import {
-  fetchCurrentWeatherForCity,
-  fetchForecastForCity
-} from '@/lib/weather/openmeteo'
+import { fetchCurrentWeatherForCity, fetchForecastForCity } from '@/lib/weather/openmeteo'
 import {
   GetWeatherInput,
   QueryScheduleInput,
