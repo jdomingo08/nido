@@ -18,10 +18,7 @@ export async function buildVoiceSystemPrompt(family: Family): Promise<string> {
       .select('name, age, color, tags')
       .eq('family_id', family.id)
       .order('created_at', { ascending: true }),
-    supabase
-      .from('family_preferences')
-      .select('kind, text')
-      .eq('family_id', family.id),
+    supabase.from('family_preferences').select('kind, text').eq('family_id', family.id),
     getCurrentWeekPlan(family.id)
   ])
 
@@ -33,8 +30,7 @@ export async function buildVoiceSystemPrompt(family: Family): Promise<string> {
     kids && kids.length > 0
       ? kids
           .map(
-            (k) =>
-              `- ${k.name} (age ${k.age}${k.tags.length > 0 ? `, ${k.tags.join(', ')}` : ''})`
+            (k) => `- ${k.name} (age ${k.age}${k.tags.length > 0 ? `, ${k.tags.join(', ')}` : ''})`
           )
           .join('\n')
       : '- (no kids on file)'

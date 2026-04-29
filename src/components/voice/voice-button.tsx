@@ -130,18 +130,14 @@ export function VoiceButton() {
         }
         // User speech transcribed (a few names depending on SDK version).
         case 'conversation.item.input_audio_transcription.completed': {
-          const text = String(
-            (evt as { transcript?: string }).transcript ?? ''
-          )
+          const text = String((evt as { transcript?: string }).transcript ?? '')
           if (text) showCaption(`you: ${text}`)
           return
         }
         // Assistant audio transcript ready (final).
         case 'response.audio_transcript.done':
         case 'response.output_audio_transcript.done': {
-          const text = String(
-            (evt as { transcript?: string }).transcript ?? ''
-          )
+          const text = String((evt as { transcript?: string }).transcript ?? '')
           if (text) showCaption(text)
           return
         }

@@ -29,7 +29,9 @@ export function applySecurityHeaders(response: NextResponse, origin: string | nu
   headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   headers.set(
     'Permissions-Policy',
-    'camera=(), microphone=(), geolocation=(self), interest-cohort=()'
+    // microphone=(self) is required by the voice agent (Realtime over WebRTC).
+    // camera stays denied — we don't use it.
+    'camera=(), microphone=(self), geolocation=(self), interest-cohort=()'
   )
 
   const allowed = getAllowedOrigins()

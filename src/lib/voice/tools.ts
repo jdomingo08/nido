@@ -24,9 +24,7 @@ export const SuggestTimeSlotInput = z.object({
     .min(15)
     .max(480)
     .describe('How long the slot needs to be, in minutes'),
-  preferred_day: Day.optional().describe(
-    'Preferred day of the week. Omit to consider any day.'
-  ),
+  preferred_day: Day.optional().describe('Preferred day of the week. Omit to consider any day.'),
   week_start_date: IsoDate.optional().describe(
     'Monday of the target week. Omit to use the current week.'
   )

@@ -13,18 +13,11 @@ import {
   getPersonalActivitiesForWeek,
   type ScheduledPersonalActivity
 } from '@/domains/personal/server/queries'
-import {
-  QueryScheduleInput,
-  SuggestTimeSlotInput,
-  VOICE_TOOLS,
-  type VoiceTool
-} from './tools'
+import { QueryScheduleInput, SuggestTimeSlotInput, VOICE_TOOLS, type VoiceTool } from './tools'
 
 // ─── Public dispatcher ──────────────────────────────────────────
 
-export type DispatchResult =
-  | { ok: true; result: unknown }
-  | { ok: false; error: string }
+export type DispatchResult = { ok: true; result: unknown } | { ok: false; error: string }
 
 export async function dispatchTool(
   name: string,
@@ -46,9 +39,7 @@ export async function dispatchTool(
     case 'query_schedule':
       return ok(await handleQuerySchedule(parsed.data as QueryScheduleArgs, familyId))
     case 'suggest_time_slot':
-      return ok(
-        await handleSuggestTimeSlot(parsed.data as SuggestTimeSlotArgs, familyId)
-      )
+      return ok(await handleSuggestTimeSlot(parsed.data as SuggestTimeSlotArgs, familyId))
     default:
       return { ok: false, error: `no_handler:${name}` }
   }
@@ -75,7 +66,10 @@ async function handleQuerySchedule(args: QueryScheduleArgs, familyId: string) {
   // Compact, model-friendly digest. Skip raw UUIDs in the values returned
   // to the model (it doesn't need them yet); shape the day-by-day summary
   // as terse strings so the model can read it back conversationally.
-  const byDay: Record<string, Array<{ time: string; duration_min: number; title: string; kind: 'kid' | 'you' }>> = {}
+  const byDay: Record<
+    string,
+    Array<{ time: string; duration_min: number; title: string; kind: 'kid' | 'you' }>
+  > = {}
   for (const day of DAYS) byDay[day] = []
 
   for (const a of activities) {
@@ -112,7 +106,9 @@ async function handleSuggestTimeSlot(args: SuggestTimeSlotArgs, familyId: string
     getPersonalActivitiesForWeek(familyId, new Date(weekIso + 'T12:00:00'))
   ])
 
-  const dayCandidates: DayId[] = args.preferred_day ? [args.preferred_day] : (DAYS as readonly DayId[]).slice()
+  const dayCandidates: DayId[] = args.preferred_day
+    ? [args.preferred_day]
+    : (DAYS as readonly DayId[]).slice()
   const durationHr = args.duration_min / 60
 
   // Build per-day busy intervals (in fractional hours).
