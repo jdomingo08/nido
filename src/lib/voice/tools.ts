@@ -30,6 +30,18 @@ export const SuggestTimeSlotInput = z.object({
   )
 })
 
+export const GetWeatherInput = z.object({
+  day: z
+    .enum(['today', 'tomorrow', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'])
+    .optional()
+    .describe(
+      "Optional day to focus on. 'today' or 'tomorrow' resolve relative to now. Day-of-week values resolve within the target week. Omit to return current conditions plus the full 7-day outlook."
+    ),
+  week_start_date: IsoDate.optional().describe(
+    'Monday of the target week when asking about a weekday. Omit to use the current week.'
+  )
+})
+
 // ─── Tool registry ─────────────────────────────────────────────
 
 export type VoiceToolKind = 'read' | 'write'
@@ -57,6 +69,13 @@ export const VOICE_TOOLS: Record<string, VoiceTool> = {
     description:
       "Find open time slots in the week given a duration. Use when the user asks 'when can I…' or 'what's a good time for…'. Returns up to 5 candidate slots ranked by how well they fit (mid-day blocks, low conflict density). The model proposes one to the user; if accepted, it would in a future version add it via add_personal_activity.",
     schema: SuggestTimeSlotInput
+  },
+  get_weather: {
+    name: 'get_weather',
+    kind: 'read',
+    description:
+      "Read the live weather forecast for the family's city. Use whenever the user asks about the weather — today, tomorrow, the rest of the week, or a specific day. Returns current conditions plus a per-day morning/afternoon/evening summary, and (if a single day is requested) the hourly forecast for that day.",
+    schema: GetWeatherInput
   }
 }
 

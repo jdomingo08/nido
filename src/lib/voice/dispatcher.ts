@@ -13,7 +13,18 @@ import {
   getPersonalActivitiesForWeek,
   type ScheduledPersonalActivity
 } from '@/domains/personal/server/queries'
-import { QueryScheduleInput, SuggestTimeSlotInput, VOICE_TOOLS, type VoiceTool } from './tools'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
+import {
+  fetchCurrentWeatherForCity,
+  fetchForecastForCity
+} from '@/lib/weather/openmeteo'
+import {
+  GetWeatherInput,
+  QueryScheduleInput,
+  SuggestTimeSlotInput,
+  VOICE_TOOLS,
+  type VoiceTool
+} from './tools'
 
 // ─── Public dispatcher ──────────────────────────────────────────
 
@@ -40,6 +51,8 @@ export async function dispatchTool(
       return ok(await handleQuerySchedule(parsed.data as QueryScheduleArgs, familyId))
     case 'suggest_time_slot':
       return ok(await handleSuggestTimeSlot(parsed.data as SuggestTimeSlotArgs, familyId))
+    case 'get_weather':
+      return ok(await handleGetWeather(parsed.data as GetWeatherArgs, familyId))
     default:
       return { ok: false, error: `no_handler:${name}` }
   }
@@ -53,6 +66,7 @@ function ok(result: unknown): DispatchResult {
 
 type QueryScheduleArgs = ReturnType<typeof QueryScheduleInput.parse>
 type SuggestTimeSlotArgs = ReturnType<typeof SuggestTimeSlotInput.parse>
+type GetWeatherArgs = ReturnType<typeof GetWeatherInput.parse>
 
 async function handleQuerySchedule(args: QueryScheduleArgs, familyId: string) {
   const weekIso = args.week_start_date ?? isoDate(mostRecentMonday(new Date()))
@@ -172,4 +186,97 @@ function formatHour(h: number): string {
   const hh = Math.floor(h)
   const mm = Math.round((h - hh) * 60)
   return `${hh.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}`
+}
+
+async function handleGetWeather(args: GetWeatherArgs, familyId: string) {
+  const supabase = await createSupabaseServerClient()
+  const { data: family } = await supabase
+    .from('families')
+    .select('city')
+    .eq('id', familyId)
+    .maybeSingle()
+  const city = family?.city ?? null
+  if (!city) {
+    return { ok: false, error: 'no_city_on_family' }
+  }
+
+  const weekIso = args.week_start_date ?? isoDate(mostRecentMonday(new Date()))
+  const startDate = new Date(weekIso + 'T12:00:00')
+
+  const [current, forecast] = await Promise.all([
+    fetchCurrentWeatherForCity(city),
+    fetchForecastForCity({ city, startDate })
+  ])
+
+  // Daily summary the model can read back conversationally.
+  const days = forecast.map((d) => ({
+    day: d.day,
+    date: d.date,
+    morning: { label: d.parts.morning.label, temp_f: d.parts.morning.temp_f },
+    afternoon: { label: d.parts.afternoon.label, temp_f: d.parts.afternoon.temp_f },
+    evening: { label: d.parts.evening.label, temp_f: d.parts.evening.temp_f }
+  }))
+
+  // Resolve the focused day if one was requested.
+  let focusDay: DayId | null = null
+  if (args.day === 'today') {
+    focusDay = isoDateToDayId(isoDate(new Date()))
+  } else if (args.day === 'tomorrow') {
+    const t = new Date()
+    t.setDate(t.getDate() + 1)
+    focusDay = isoDateToDayId(isoDate(t))
+  } else if (args.day) {
+    focusDay = args.day
+  }
+
+  const focusEntry = focusDay ? forecast.find((f) => f.day === focusDay) : null
+  const focus = focusEntry
+    ? {
+        day: focusEntry.day,
+        date: focusEntry.date,
+        hourly: (focusEntry.hourly ?? []).map((h) => ({
+          hour: h.hour,
+          label: codeLabel(h.code),
+          temp_f: h.temp_f
+        }))
+      }
+    : null
+
+  return {
+    city,
+    week_start_date: weekIso,
+    current: current
+      ? {
+          label: current.label,
+          temp_f: current.temp_f,
+          temp_c: current.temp_c
+        }
+      : null,
+    days,
+    focus
+  }
+}
+
+// Tiny WMO-code → label so the per-hour data is human-readable for the model.
+// Mirrors codeToLabel in openmeteo.ts but kept inline to avoid exporting more
+// surface area from that module.
+function codeLabel(code: number): string {
+  if (code === 0) return 'clear'
+  if (code <= 2) return 'partly cloudy'
+  if (code === 3) return 'overcast'
+  if (code <= 48) return 'foggy'
+  if (code <= 57) return 'drizzle'
+  if (code <= 67) return 'rainy'
+  if (code <= 77) return 'snowy'
+  if (code <= 82) return 'showers'
+  if (code <= 86) return 'snowy'
+  if (code <= 99) return 'storm'
+  return 'cloudy'
+}
+
+function isoDateToDayId(iso: string): DayId {
+  const d = new Date(iso + 'T12:00:00')
+  const idx = d.getDay() // 0=Sun, 1=Mon ... 6=Sat
+  const ids: DayId[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
+  return ids[idx] ?? 'mon'
 }

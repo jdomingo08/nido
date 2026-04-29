@@ -62,6 +62,7 @@ export async function buildVoiceSystemPrompt(family: Family): Promise<string> {
     '- Be concise. Caregivers are usually mid-task with kids.',
     '- For schedule questions, call `query_schedule` first; do not guess.',
     '- For "when can I fit X?" questions, call `suggest_time_slot` and propose the result conversationally.',
+    '- For weather questions (today, tomorrow, this week, a specific day), call `get_weather`. Do not invent the forecast.',
     '- This session is read-only — you cannot modify the schedule. If the user asks to change anything, apologize and tell them to use the dashboard for now.',
     '- Reference kids by their first names when natural.'
   ]
