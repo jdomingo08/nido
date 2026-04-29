@@ -10,28 +10,35 @@ import {
   getWeekPlan,
   isoDate,
   mostRecentMonday,
-  type Activity
+  type Activity,
+  type DayId
 } from '@/domains/planning/server/queries'
-import { getPersonalActivitiesForWeek } from '@/domains/personal/server/queries'
+import {
+  getPersonalActivitiesForWeek,
+  type ScheduledPersonalActivity
+} from '@/domains/personal/server/queries'
 import { fetchForecastForCity, type DayForecast } from '@/lib/weather/openmeteo'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { AddPersonalActivityButton } from './add-personal-activity-button'
+import { ViewToggle, type DashboardView } from './view-toggle'
 import { WeekGrid } from './week-grid'
 import { WeekNav } from './week-nav'
+import { WeekSummary } from './week-summary'
 
 const WEEK_QUERY_RE = /^\d{4}-\d{2}-\d{2}$/
 
 export default async function DashboardPage({
   searchParams
 }: {
-  searchParams: Promise<{ week?: string }>
+  searchParams: Promise<{ week?: string; view?: string }>
 }) {
   const { family } = await requireFamily()
   const supabase = await createSupabaseServerClient()
-  const { week: weekQuery } = await searchParams
+  const { week: weekQuery, view: viewQuery } = await searchParams
 
   // Resolve target week. Bad query → snap to current Monday.
   const targetWeekIso = resolveWeekStart(weekQuery)
+  const view: DashboardView = viewQuery === 'summary' ? 'summary' : 'grid'
 
   const { data: kids } = await supabase
     .from('kids')
@@ -56,9 +63,12 @@ export default async function DashboardPage({
     })
     if (live.length > 0) forecast = live
   }
-  // Forecast isn't displayed in the grid yet (it lives on day pages); we
-  // hold onto it here for future inline-grid rendering.
-  void forecast
+
+  // Both views share the source data; the summary view also wants per-day
+  // groupings + a forecast lookup. Compute lazily — these are cheap.
+  const byDay = groupByDay(activities)
+  const personalByDay = groupPersonalByDay(personalActivities)
+  const forecastByDay = new Map<DayId, DayForecast>(forecast.map((d) => [d.day, d]))
 
   const prevWeekIso = addDaysIso(targetWeekIso, -7)
   const nextWeekIso = addDaysIso(targetWeekIso, 7)
@@ -87,7 +97,10 @@ export default async function DashboardPage({
         </header>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <AddPersonalActivityButton />
+          <div className="flex flex-wrap items-center gap-3">
+            <AddPersonalActivityButton />
+            <ViewToggle current={view} />
+          </div>
           {weekPlan && (
             <p className="font-mono text-[11px] tracking-widest uppercase opacity-60">
               {countByStatus(activities, 'approved')} approved ·{' '}
@@ -98,12 +111,26 @@ export default async function DashboardPage({
 
         <div className="mt-6">
           {weekPlan ? (
-            <WeekGrid
-              activities={activities}
-              personal={personalActivities}
-              kids={kids ?? []}
-              weekStartDate={targetWeekIso}
-            />
+            view === 'grid' ? (
+              <WeekGrid
+                activities={activities}
+                personal={personalActivities}
+                kids={kids ?? []}
+                weekStartDate={targetWeekIso}
+              />
+            ) : (
+              <>
+                <WeekSummary
+                  activitiesByDay={byDay}
+                  personalByDay={personalByDay}
+                  forecastByDay={forecastByDay}
+                  weekStartDate={targetWeekIso}
+                />
+                <p className="mt-4 font-mono text-[11px] tracking-widest uppercase opacity-50">
+                  tap any day to drill into the timeline.
+                </p>
+              </>
+            )
           ) : (
             <EmptyWeekShell weekStartIso={targetWeekIso} />
           )}
@@ -131,7 +158,6 @@ function EmptyWeekShell({ weekStartIso }: { weekStartIso: string }) {
 
 function resolveWeekStart(query: string | undefined): string {
   if (query && WEEK_QUERY_RE.test(query)) {
-    // Snap any date in the query to its Monday so prev/next math is consistent.
     return isoDate(mostRecentMonday(new Date(query + 'T12:00:00')))
   }
   return isoDate(mostRecentMonday(new Date()))
@@ -141,6 +167,27 @@ function addDaysIso(weekStartIso: string, days: number): string {
   const d = new Date(weekStartIso + 'T12:00:00')
   d.setDate(d.getDate() + days)
   return isoDate(d)
+}
+
+function groupByDay(activities: Activity[]): Partial<Record<DayId, Activity[]>> {
+  const out: Partial<Record<DayId, Activity[]>> = {}
+  for (const a of activities) {
+    const day = a.day as DayId
+    if (!out[day]) out[day] = []
+    out[day]!.push(a)
+  }
+  return out
+}
+
+function groupPersonalByDay(
+  activities: ScheduledPersonalActivity[]
+): Partial<Record<DayId, ScheduledPersonalActivity[]>> {
+  const out: Partial<Record<DayId, ScheduledPersonalActivity[]>> = {}
+  for (const a of activities) {
+    if (!out[a.resolved_day]) out[a.resolved_day] = []
+    out[a.resolved_day]!.push(a)
+  }
+  return out
 }
 
 function countByStatus(activities: Activity[], status: string): number {
