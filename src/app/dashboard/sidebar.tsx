@@ -31,7 +31,7 @@ export function Sidebar({
   userEmail: string | undefined
 }) {
   return (
-    <aside className="flex h-full w-[240px] shrink-0 flex-col border-r-2 border-[#16121A] bg-[#16121A] text-[#FBF5E8]">
+    <aside className="sticky top-0 flex h-screen w-[240px] shrink-0 flex-col self-start overflow-y-auto border-r-2 border-[#16121A] bg-[#16121A] text-[#FBF5E8]">
       {/* Brand */}
       <div className="px-5 pt-6 pb-4">
         <p className="text-[36px] leading-none font-bold tracking-tight text-[#F4D22B]">nido</p>

@@ -1,9 +1,5 @@
 import Link from 'next/link'
-import {
-  DAYS,
-  type Activity,
-  type DayId
-} from '@/domains/planning/server/queries'
+import { DAYS, type Activity, type DayId } from '@/domains/planning/server/queries'
 import type { ScheduledPersonalActivity } from '@/domains/personal/server/queries'
 import type { Tables } from '@/lib/supabase/database.types'
 
