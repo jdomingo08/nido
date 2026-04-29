@@ -203,17 +203,18 @@ export function VoiceButton() {
       const offer = await pc.createOffer()
       await pc.setLocalDescription(offer)
 
-      const sdpRes = await fetch(
-        `https://api.openai.com/v1/realtime?model=${encodeURIComponent(session.model)}`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${session.client_secret}`,
-            'Content-Type': 'application/sdp'
-          },
-          body: offer.sdp ?? ''
-        }
-      )
+      // GA Realtime WebRTC SDP exchange. The legacy beta endpoint
+      // (/v1/realtime?model=…) rejects GA client_secrets with an
+      // "API version mismatch" error. GA expects /v1/realtime/calls and
+      // takes the model from the session config minted server-side.
+      const sdpRes = await fetch('https://api.openai.com/v1/realtime/calls', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.client_secret}`,
+          'Content-Type': 'application/sdp'
+        },
+        body: offer.sdp ?? ''
+      })
       if (!sdpRes.ok) {
         const text = await sdpRes.text().catch(() => '')
         throw new Error(`sdp_${sdpRes.status}:${text.slice(0, 200)}`)
