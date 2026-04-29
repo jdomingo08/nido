@@ -1,6 +1,7 @@
 import { requireFamily } from '@/domains/family/server/auth'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { fetchCurrentWeatherForCity } from '@/lib/weather/openmeteo'
+import { VoiceButtonMount } from '@/components/voice/voice-button-mount'
 import { Sidebar } from './sidebar'
 
 // Wraps every /dashboard/* page with the persistent left sidebar.
@@ -34,6 +35,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         userEmail={user.email}
       />
       <div className="min-w-0 flex-1">{children}</div>
+      <VoiceButtonMount />
     </div>
   )
 }

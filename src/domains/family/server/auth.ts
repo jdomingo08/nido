@@ -71,3 +71,21 @@ export async function requireFamily(): Promise<{
   if (!family) redirect('/onboarding')
   return { user, family }
 }
+
+// API-route-safe variant. Calling redirect() inside a Route Handler throws,
+// so this returns a Result the caller can convert into a JSON 401/403.
+export type AuthResult =
+  | {
+      ok: true
+      user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>
+      family: Family
+    }
+  | { ok: false; status: 401 | 403; error: string }
+
+export async function requireFamilyOrError(): Promise<AuthResult> {
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, status: 401, error: 'not_authenticated' }
+  const family = await getCurrentFamily()
+  if (!family) return { ok: false, status: 403, error: 'no_family' }
+  return { ok: true, user, family }
+}
