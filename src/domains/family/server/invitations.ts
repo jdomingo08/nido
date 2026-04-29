@@ -121,3 +121,29 @@ export async function removeMember(memberId: string) {
 
   revalidatePath('/settings')
 }
+
+const UpdateMemberSchema = z.object({
+  name: z.string().min(1).max(100),
+  role: Role.optional(),
+  avatar_color: z.string().min(1).max(40).optional()
+})
+
+export type UpdateMemberInput = z.infer<typeof UpdateMemberSchema>
+
+// Update a family member's display fields. RLS gates authorization:
+//   - family_members_update_self lets a user edit their own row.
+//   - family_members_update_owner lets owners edit any member in their family.
+// Either policy is sufficient.
+export async function updateMember(memberId: string, input: UpdateMemberInput) {
+  const id = z.string().uuid().parse(memberId)
+  const data = UpdateMemberSchema.parse(input)
+  await requireFamily()
+  const supabase = await createSupabaseServerClient()
+
+  const { error } = await supabase.from('family_members').update(data).eq('id', id)
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/settings')
+  // Sidebar family chips on /dashboard render names too.
+  revalidatePath('/dashboard', 'layout')
+}

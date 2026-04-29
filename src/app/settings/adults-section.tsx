@@ -5,6 +5,7 @@ import {
   removeMember,
   revokeInvite,
   sendInvite,
+  updateMember,
   type InviteResult
 } from '@/domains/family/server/invitations'
 import type { Tables } from '@/lib/supabase/database.types'
@@ -57,7 +58,13 @@ export function AdultsSection({
 
       <ul className="flex flex-col gap-3">
         {members.map((m) => (
-          <MemberRow key={m.id} member={m} currentUserId={currentUserId} canRemove={isOwner} />
+          <MemberRow
+            key={m.id}
+            member={m}
+            currentUserId={currentUserId}
+            canRemove={isOwner}
+            canEdit={isOwner || m.auth_user_id === currentUserId}
+          />
         ))}
 
         {invitations.map((inv) => (
@@ -86,14 +93,18 @@ export function AdultsSection({
 function MemberRow({
   member,
   currentUserId,
-  canRemove
+  canRemove,
+  canEdit
 }: {
   member: Member
   currentUserId: string
   canRemove: boolean
+  canEdit: boolean
 }) {
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [editing, setEditing] = useState(false)
+  const [draftName, setDraftName] = useState(member.name)
   const tint = COLOR_HEX[member.avatar_color] ?? '#16121A'
   const isYou = member.auth_user_id === currentUserId
 
@@ -109,6 +120,39 @@ function MemberRow({
     })
   }
 
+  function handleSave() {
+    const next = draftName.trim()
+    if (!next) {
+      setError('name is required')
+      return
+    }
+    if (next === member.name) {
+      setEditing(false)
+      return
+    }
+    setError(null)
+    startTransition(async () => {
+      try {
+        await updateMember(member.id, { name: next })
+        setEditing(false)
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'save failed')
+      }
+    })
+  }
+
+  function handleEdit() {
+    setDraftName(member.name)
+    setError(null)
+    setEditing(true)
+  }
+
+  function handleCancel() {
+    setDraftName(member.name)
+    setError(null)
+    setEditing(false)
+  }
+
   return (
     <li
       className="flex items-center gap-3 rounded-xl border-2 border-[#16121A] p-3"
@@ -118,34 +162,94 @@ function MemberRow({
         {member.name.charAt(0).toUpperCase()}
       </span>
       <div className="flex-1 text-[#FBF5E8]">
-        <div className="font-bold">
-          {member.name}
-          {isYou && (
-            <span className="ml-2 font-mono text-[10px] tracking-widest uppercase opacity-90">
-              (you)
-            </span>
-          )}
-          {member.is_owner && (
-            <span className="ml-2 font-mono text-[10px] tracking-widest uppercase opacity-90">
-              · owner
-            </span>
-          )}
-        </div>
-        <div className="font-mono text-xs tracking-widest uppercase opacity-90">
-          {member.role}
-          {member.email && ` · ${member.email}`}
-        </div>
+        {editing ? (
+          <div className="flex flex-col gap-1">
+            <input
+              autoFocus
+              value={draftName}
+              onChange={(e) => setDraftName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleSave()
+                }
+                if (e.key === 'Escape') {
+                  e.preventDefault()
+                  handleCancel()
+                }
+              }}
+              className="rounded-md border-2 border-[#16121A] bg-[#FBF5E8] px-2 py-1 text-sm font-bold text-[#16121A]"
+            />
+            <div className="font-mono text-[10px] tracking-widest uppercase opacity-80">
+              {member.role}
+              {member.email && ` · ${member.email}`}
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="font-bold">
+              {member.name}
+              {isYou && (
+                <span className="ml-2 font-mono text-[10px] tracking-widest uppercase opacity-90">
+                  (you)
+                </span>
+              )}
+              {member.is_owner && (
+                <span className="ml-2 font-mono text-[10px] tracking-widest uppercase opacity-90">
+                  · owner
+                </span>
+              )}
+            </div>
+            <div className="font-mono text-xs tracking-widest uppercase opacity-90">
+              {member.role}
+              {member.email && ` · ${member.email}`}
+            </div>
+          </>
+        )}
         {error && <div className="mt-1 text-xs">{error}</div>}
       </div>
-      {canRemove && !isYou && !member.is_owner && (
-        <button
-          type="button"
-          onClick={handleRemove}
-          disabled={pending}
-          className="rounded-md border border-[#FBF5E8] bg-[#FBF5E8] px-2 py-1 text-xs font-bold tracking-widest text-[#16121A] uppercase disabled:opacity-50"
-        >
-          {pending ? '…' : 'remove'}
-        </button>
+      {editing ? (
+        <div className="flex gap-1">
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={pending}
+            className="rounded-md border border-[#FBF5E8] px-2 py-1 text-xs font-bold tracking-widest text-[#FBF5E8] uppercase disabled:opacity-50"
+          >
+            cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={pending}
+            className="rounded-md border border-[#FBF5E8] bg-[#FBF5E8] px-2 py-1 text-xs font-bold tracking-widest text-[#16121A] uppercase disabled:opacity-50"
+          >
+            {pending ? '…' : 'save'}
+          </button>
+        </div>
+      ) : (
+        <div className="flex gap-1">
+          {canEdit && (
+            <button
+              type="button"
+              onClick={handleEdit}
+              disabled={pending}
+              className="rounded-md border border-[#FBF5E8] px-2 py-1 text-xs font-bold tracking-widest text-[#FBF5E8] uppercase disabled:opacity-50"
+            >
+              edit
+            </button>
+          )}
+          {canRemove && !isYou && !member.is_owner && (
+            <button
+              type="button"
+              onClick={handleRemove}
+              disabled={pending}
+              className="rounded-md border border-[#FBF5E8] bg-[#FBF5E8] px-2 py-1 text-xs font-bold tracking-widest text-[#16121A] uppercase disabled:opacity-50"
+            >
+              {pending ? '…' : 'remove'}
+            </button>
+          )}
+        </div>
       )}
     </li>
   )
