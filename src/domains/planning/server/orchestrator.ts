@@ -828,16 +828,29 @@ export async function regenerateDay(
   day: (typeof DAY_KEYS)[number],
   weekStartIso?: string
 ): Promise<{ activityCount: number }> {
+  const { family } = await requireFamily()
   const target = weekStartIso ?? isoDate(mostRecentMonday(new Date()))
+  return regenerateDayInternal(family, day, target)
+}
+
+// Family-scoped variant safe to call from API Route Handlers (where
+// requireFamily()'s redirect would crash). The voice agent's dispatcher
+// goes through this entry point.
+export async function regenerateDayInternal(
+  family: import('@/lib/supabase/database.types').Tables<'families'>,
+  day: (typeof DAY_KEYS)[number],
+  weekStartIso: string
+): Promise<{ activityCount: number }> {
   try {
-    return await regenerateDayInner(day, target)
+    return await regenerateDayInner(family, day, weekStartIso)
   } catch (e) {
-    console.error(`[orchestrator] regenerateDay(${day}, ${target}) failed:`, e)
+    console.error(`[orchestrator] regenerateDay(${day}, ${weekStartIso}) failed:`, e)
     throw e
   }
 }
 
 async function regenerateDayInner(
+  family: import('@/lib/supabase/database.types').Tables<'families'>,
   day: (typeof DAY_KEYS)[number],
   weekStartIso: string
 ): Promise<{ activityCount: number }> {
@@ -845,7 +858,6 @@ async function regenerateDayInner(
     throw new Error(`Invalid day: ${day}`)
   }
 
-  const { family } = await requireFamily()
   const supabase = await createSupabaseServerClient()
   const weekStartDate = new Date(weekStartIso + 'T12:00:00')
 

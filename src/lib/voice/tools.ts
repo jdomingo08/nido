@@ -42,6 +42,94 @@ export const GetWeatherInput = z.object({
   )
 })
 
+// ─── Write-tool inputs (require explicit verbal confirmation) ──────
+
+const Confirmed = z
+  .literal(true)
+  .describe(
+    'Set to true ONLY after the user has verbally confirmed (yes / sí / correcto / etc). Otherwise omit.'
+  )
+
+const StatusValue = z.enum(['proposed', 'approved', 'dismissed', 'completed'])
+
+const Category = z.enum(['work', 'exercise', 'meal', 'errand', 'family', 'personal', 'other'])
+
+export const AddActivityInput = z.object({
+  day: Day.describe('Which day of the week to schedule the kid activity'),
+  start_hour: z
+    .number()
+    .int()
+    .min(6)
+    .max(20)
+    .describe('Hour of day to start (0–23). Whole hours only — kid activities snap to the hour.'),
+  duration_min: z
+    .number()
+    .int()
+    .min(15)
+    .max(180)
+    .describe('Activity duration in minutes (15–180).'),
+  title: z.string().min(1).max(100).describe('Short title, e.g. "watercolor at the kitchen table"'),
+  kid_names: z
+    .array(z.string().max(50))
+    .min(1)
+    .max(10)
+    .describe(
+      'Names of the kids this activity is for. Resolved against the family roster — unmatched names are dropped. Use the names as the family normally says them.'
+    ),
+  confirmed: Confirmed
+})
+
+export const AddPersonalActivityInput = z.object({
+  title: z.string().min(1).max(100).describe('Short title, e.g. "gym", "dinner prep"'),
+  category: Category,
+  recurring_days: z
+    .array(Day)
+    .min(1)
+    .max(7)
+    .optional()
+    .describe('If recurring weekly, the days. Mutually exclusive with `day`.'),
+  day: Day.optional().describe('If a one-off, the specific day. Mutually exclusive with `recurring_days`.'),
+  start_hour: z
+    .number()
+    .min(0)
+    .max(23.5)
+    .describe('Start time as a decimal hour. 8 = 8:00, 8.5 = 8:30. Snapped to half-hours.'),
+  duration_min: z.number().int().min(15).max(480).describe('Duration in minutes (15–480).'),
+  notes: z.string().max(500).optional(),
+  confirmed: Confirmed
+})
+
+export const SetActivityStatusInput = z.object({
+  activity_id: z
+    .string()
+    .uuid()
+    .describe(
+      'ID of the kid activity. Get this from a previous query_schedule call (each entry includes an id).'
+    ),
+  status: StatusValue.describe(
+    "New status. 'approved' marks it green-lit, 'dismissed' soft-rejects, 'completed' is the wrap-up."
+  ),
+  confirmed: Confirmed
+})
+
+export const RemovePersonalActivityInput = z.object({
+  activity_id: z
+    .string()
+    .uuid()
+    .describe(
+      'ID of the personal (parent) activity. Get from query_schedule. For recurring rules this removes the rule entirely.'
+    ),
+  confirmed: Confirmed
+})
+
+export const RegenerateDayInput = z.object({
+  day: Day,
+  week_start_date: IsoDate.optional().describe(
+    'Monday of the target week. Omit for the current week.'
+  ),
+  confirmed: Confirmed
+})
+
 // ─── Tool registry ─────────────────────────────────────────────
 
 export type VoiceToolKind = 'read' | 'write'
@@ -76,6 +164,41 @@ export const VOICE_TOOLS: Record<string, VoiceTool> = {
     description:
       "Read the live weather forecast for the family's city. Use whenever the user asks about the weather — today, tomorrow, the rest of the week, or a specific day. Returns current conditions plus a per-day morning/afternoon/evening summary, and (if a single day is requested) the hourly forecast for that day.",
     schema: GetWeatherInput
+  },
+  add_activity: {
+    name: 'add_activity',
+    kind: 'write',
+    description:
+      'Add a new kid activity to the current week plan. Call AFTER verbally confirming the parsed intent (day, time, duration, title, which kids). Refuses if the week has no plan yet — say "let me generate this week first" in that case.',
+    schema: AddActivityInput
+  },
+  add_personal_activity: {
+    name: 'add_personal_activity',
+    kind: 'write',
+    description:
+      "Add a parent activity to the household calendar (work blocks, gym, meals, errands). Either recurring (recurring_days) OR one-off (day) — not both. Call AFTER verbally confirming. Personal activities are constraints the kid orchestrator respects.",
+    schema: AddPersonalActivityInput
+  },
+  set_activity_status: {
+    name: 'set_activity_status',
+    kind: 'write',
+    description:
+      "Change a kid activity's status (approved / dismissed / completed / proposed). Use after the user confirms what they meant — first call query_schedule to find the activity_id.",
+    schema: SetActivityStatusInput
+  },
+  remove_personal_activity: {
+    name: 'remove_personal_activity',
+    kind: 'write',
+    description:
+      'Delete a parent activity. Get the activity_id from a query_schedule call first. Call AFTER verbally confirming.',
+    schema: RemovePersonalActivityInput
+  },
+  regenerate_day: {
+    name: 'regenerate_day',
+    kind: 'write',
+    description:
+      "Replace ALL kid activities for a single day with a fresh AI-generated set. Costs ~$0.05 and takes 10–15 seconds. Always confirm verbally before calling — this destroys the day's existing activities.",
+    schema: RegenerateDayInput
   }
 }
 

@@ -1,5 +1,7 @@
 import 'server-only'
 
+import { revalidatePath } from 'next/cache'
+import { regenerateDayInternal } from '@/domains/planning/server/orchestrator'
 import {
   DAYS,
   getActivitiesForWeek,
@@ -16,8 +18,13 @@ import {
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { fetchCurrentWeatherForCity, fetchForecastForCity } from '@/lib/weather/openmeteo'
 import {
+  AddActivityInput,
+  AddPersonalActivityInput,
   GetWeatherInput,
   QueryScheduleInput,
+  RegenerateDayInput,
+  RemovePersonalActivityInput,
+  SetActivityStatusInput,
   SuggestTimeSlotInput,
   VOICE_TOOLS,
   type VoiceTool
@@ -35,8 +42,19 @@ export async function dispatchTool(
   const tool: VoiceTool | undefined = VOICE_TOOLS[name]
   if (!tool) return { ok: false, error: `unknown_tool:${name}` }
 
-  // Slice 1 has only read tools — no confirm gate required. The gate lives
-  // in this dispatcher in slice 2 when write tools land.
+  // Confirm gate for write tools. Cheap belt-and-suspenders check on top of
+  // the Zod `confirmed: z.literal(true)` requirement — same outcome whichever
+  // hits first; this lets us return a clearer error string to the model.
+  if (tool.kind === 'write') {
+    const confirmed = (rawArgs as { confirmed?: unknown } | null)?.confirmed
+    if (confirmed !== true) {
+      return {
+        ok: false,
+        error:
+          'confirmation_required: repeat back the parsed intent to the user, wait for explicit yes, then call again with confirmed: true'
+      }
+    }
+  }
 
   const parsed = tool.schema.safeParse(rawArgs)
   if (!parsed.success) {
@@ -50,6 +68,20 @@ export async function dispatchTool(
       return ok(await handleSuggestTimeSlot(parsed.data as SuggestTimeSlotArgs, familyId))
     case 'get_weather':
       return ok(await handleGetWeather(parsed.data as GetWeatherArgs, familyId))
+    case 'add_activity':
+      return ok(await handleAddActivity(parsed.data as AddActivityArgs, familyId))
+    case 'add_personal_activity':
+      return ok(
+        await handleAddPersonalActivity(parsed.data as AddPersonalActivityArgs, familyId)
+      )
+    case 'set_activity_status':
+      return ok(await handleSetActivityStatus(parsed.data as SetActivityStatusArgs, familyId))
+    case 'remove_personal_activity':
+      return ok(
+        await handleRemovePersonalActivity(parsed.data as RemovePersonalActivityArgs, familyId)
+      )
+    case 'regenerate_day':
+      return ok(await handleRegenerateDay(parsed.data as RegenerateDayArgs, familyId))
     default:
       return { ok: false, error: `no_handler:${name}` }
   }
@@ -64,6 +96,11 @@ function ok(result: unknown): DispatchResult {
 type QueryScheduleArgs = ReturnType<typeof QueryScheduleInput.parse>
 type SuggestTimeSlotArgs = ReturnType<typeof SuggestTimeSlotInput.parse>
 type GetWeatherArgs = ReturnType<typeof GetWeatherInput.parse>
+type AddActivityArgs = ReturnType<typeof AddActivityInput.parse>
+type AddPersonalActivityArgs = ReturnType<typeof AddPersonalActivityInput.parse>
+type SetActivityStatusArgs = ReturnType<typeof SetActivityStatusInput.parse>
+type RemovePersonalActivityArgs = ReturnType<typeof RemovePersonalActivityInput.parse>
+type RegenerateDayArgs = ReturnType<typeof RegenerateDayInput.parse>
 
 async function handleQuerySchedule(args: QueryScheduleArgs, familyId: string) {
   const weekIso = args.week_start_date ?? isoDate(mostRecentMonday(new Date()))
@@ -74,25 +111,34 @@ async function handleQuerySchedule(args: QueryScheduleArgs, familyId: string) {
     getPersonalActivitiesForWeek(familyId, new Date(weekIso + 'T12:00:00'))
   ])
 
-  // Compact, model-friendly digest. Skip raw UUIDs in the values returned
-  // to the model (it doesn't need them yet); shape the day-by-day summary
-  // as terse strings so the model can read it back conversationally.
+  // Compact, model-friendly digest. IDs are included so the model can pass
+  // them back to write tools (set_activity_status, remove_personal_activity).
   const byDay: Record<
     string,
-    Array<{ time: string; duration_min: number; title: string; kind: 'kid' | 'you' }>
+    Array<{
+      id: string
+      time: string
+      duration_min: number
+      title: string
+      kind: 'kid' | 'you'
+      status?: string
+    }>
   > = {}
   for (const day of DAYS) byDay[day] = []
 
   for (const a of activities) {
     byDay[a.day]!.push({
+      id: a.id,
       time: formatHour(a.start_hour),
       duration_min: a.duration_min,
       title: a.title,
-      kind: 'kid'
+      kind: 'kid',
+      status: a.status
     })
   }
   for (const p of personal as ScheduledPersonalActivity[]) {
     byDay[p.resolved_day]!.push({
+      id: p.id,
       time: formatHour(Number(p.start_hour)),
       duration_min: p.duration_min,
       title: p.title,
@@ -276,4 +322,193 @@ function isoDateToDayId(iso: string): DayId {
   const idx = d.getDay() // 0=Sun, 1=Mon ... 6=Sat
   const ids: DayId[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
   return ids[idx] ?? 'mon'
+}
+
+// ─── Write handlers ────────────────────────────────────────────
+
+const COLOR_BY_CATEGORY: Record<AddPersonalActivityArgs['category'], string> = {
+  work: 'electric',
+  exercise: 'aqua',
+  meal: 'sunset',
+  errand: 'citrus',
+  family: 'flamingo',
+  personal: 'lavender',
+  other: 'ink'
+}
+
+async function handleAddActivity(args: AddActivityArgs, familyId: string) {
+  const supabase = await createSupabaseServerClient()
+  const weekIso = isoDate(mostRecentMonday(new Date()))
+  const weekPlan = await getWeekPlan(familyId, weekIso)
+  if (!weekPlan) {
+    return {
+      ok: false,
+      error: 'no_week_plan',
+      message:
+        "There's no plan for this week yet. Generate the week from the dashboard first, then try again."
+    }
+  }
+
+  // Resolve kid_names → kid_ids (case-insensitive). Drop unmatched names.
+  const { data: kids } = await supabase
+    .from('kids')
+    .select('id, name')
+    .eq('family_id', familyId)
+  const lowerNames = args.kid_names.map((n) => n.trim().toLowerCase())
+  const matched = (kids ?? []).filter((k) => lowerNames.includes(k.name.toLowerCase()))
+  if (matched.length === 0) {
+    return {
+      ok: false,
+      error: 'no_matching_kids',
+      message: `Couldn't find any of: ${args.kid_names.join(', ')}. Roster is: ${(kids ?? []).map((k) => k.name).join(', ')}.`
+    }
+  }
+  const kid_ids = matched.map((k) => k.id)
+
+  const { data: row, error } = await supabase
+    .from('activities')
+    .insert({
+      week_plan_id: weekPlan.id,
+      family_id: familyId,
+      day: args.day,
+      start_hour: args.start_hour,
+      duration_min: args.duration_min,
+      kid_ids,
+      title: args.title,
+      summary: args.title,
+      bucket: 'creative', // sensible default; user can change in dashboard
+      status: 'approved'
+    })
+    .select('id')
+    .single()
+  if (error || !row) throw new Error(error?.message ?? 'insert_failed')
+
+  revalidatePath('/dashboard', 'layout')
+  return {
+    activity_id: row.id,
+    day: args.day,
+    start_time: formatHour(args.start_hour),
+    duration_min: args.duration_min,
+    kid_names: matched.map((k) => k.name),
+    title: args.title
+  }
+}
+
+async function handleAddPersonalActivity(args: AddPersonalActivityArgs, familyId: string) {
+  const isRecurring = !!args.recurring_days && args.recurring_days.length > 0
+  const isOneOff = !!args.day
+  if (isRecurring && isOneOff) {
+    return {
+      ok: false,
+      error: 'invalid_args',
+      message: 'Provide either recurring_days OR day, not both.'
+    }
+  }
+  if (!isRecurring && !isOneOff) {
+    return {
+      ok: false,
+      error: 'invalid_args',
+      message: 'Provide either recurring_days (for weekly rule) or day (for one-off).'
+    }
+  }
+
+  const color = COLOR_BY_CATEGORY[args.category]
+  const supabase = await createSupabaseServerClient()
+  const weekIso = isoDate(mostRecentMonday(new Date()))
+
+  const insertData = {
+    family_id: familyId,
+    family_member_id: null,
+    title: args.title,
+    category: args.category,
+    color,
+    notes: args.notes ?? null,
+    start_hour: args.start_hour,
+    duration_min: args.duration_min,
+    is_recurring: isRecurring,
+    recurring_days: isRecurring ? (args.recurring_days as string[]) : [],
+    day: isRecurring ? null : (args.day as string),
+    week_start_date: isRecurring ? null : weekIso
+  }
+
+  const { data: row, error } = await supabase
+    .from('personal_activities')
+    .insert(insertData)
+    .select('id')
+    .single()
+  if (error || !row) throw new Error(error?.message ?? 'insert_failed')
+
+  revalidatePath('/dashboard', 'layout')
+  return {
+    personal_activity_id: row.id,
+    title: args.title,
+    category: args.category,
+    is_recurring: isRecurring,
+    days: isRecurring ? args.recurring_days : [args.day]
+  }
+}
+
+async function handleSetActivityStatus(args: SetActivityStatusArgs, familyId: string) {
+  const supabase = await createSupabaseServerClient()
+  const { data: row, error } = await supabase
+    .from('activities')
+    .update({ status: args.status })
+    .eq('id', args.activity_id)
+    .eq('family_id', familyId)
+    .select('id, title, day, status')
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  if (!row) {
+    return { ok: false, error: 'not_found', message: 'No matching activity in your family.' }
+  }
+  revalidatePath('/dashboard', 'layout')
+  return { activity_id: row.id, title: row.title, day: row.day, status: row.status }
+}
+
+async function handleRemovePersonalActivity(
+  args: RemovePersonalActivityArgs,
+  familyId: string
+) {
+  const supabase = await createSupabaseServerClient()
+  const { data: row, error } = await supabase
+    .from('personal_activities')
+    .delete()
+    .eq('id', args.activity_id)
+    .eq('family_id', familyId)
+    .select('id, title')
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  if (!row) {
+    return {
+      ok: false,
+      error: 'not_found',
+      message: 'No matching personal activity in your family.'
+    }
+  }
+  revalidatePath('/dashboard', 'layout')
+  return { personal_activity_id: row.id, title: row.title, removed: true }
+}
+
+async function handleRegenerateDay(args: RegenerateDayArgs, familyId: string) {
+  const supabase = await createSupabaseServerClient()
+  const { data: family } = await supabase
+    .from('families')
+    .select('*')
+    .eq('id', familyId)
+    .single()
+  if (!family) {
+    return { ok: false, error: 'family_not_found' }
+  }
+  const weekIso = args.week_start_date ?? isoDate(mostRecentMonday(new Date()))
+
+  // regenerate_day takes 10–15s on the LLM. The voice agent will sit silent
+  // during that time which feels broken — the system prompt instructs the
+  // model to say "regenerating now, takes about 10 seconds" before calling.
+  const result = await regenerateDayInternal(family, args.day, weekIso)
+  revalidatePath('/dashboard', 'layout')
+  return {
+    day: args.day,
+    week_start_date: weekIso,
+    activity_count: result.activityCount
+  }
 }
