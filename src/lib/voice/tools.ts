@@ -88,7 +88,9 @@ export const AddPersonalActivityInput = z.object({
     .max(7)
     .optional()
     .describe('If recurring weekly, the days. Mutually exclusive with `day`.'),
-  day: Day.optional().describe('If a one-off, the specific day. Mutually exclusive with `recurring_days`.'),
+  day: Day.optional().describe(
+    'If a one-off, the specific day. Mutually exclusive with `recurring_days`.'
+  ),
   start_hour: z
     .number()
     .min(0)
@@ -176,7 +178,7 @@ export const VOICE_TOOLS: Record<string, VoiceTool> = {
     name: 'add_personal_activity',
     kind: 'write',
     description:
-      "Add a parent activity to the household calendar (work blocks, gym, meals, errands). Either recurring (recurring_days) OR one-off (day) — not both. Call AFTER verbally confirming. Personal activities are constraints the kid orchestrator respects.",
+      'Add a parent activity to the household calendar (work blocks, gym, meals, errands). Either recurring (recurring_days) OR one-off (day) — not both. Call AFTER verbally confirming. Personal activities are constraints the kid orchestrator respects.',
     schema: AddPersonalActivityInput
   },
   set_activity_status: {

@@ -4,8 +4,9 @@ import { getOpenAIClient } from '@/lib/openai/client'
 import { buildVoiceSystemPrompt } from '@/lib/voice/system-prompt'
 import { buildRealtimeTools } from '@/lib/voice/tools'
 
-const VOICE_MODEL = process.env.VOICE_REALTIME_MODEL ?? 'gpt-realtime'
+const VOICE_MODEL = process.env.VOICE_REALTIME_MODEL ?? 'gpt-realtime-2'
 const VOICE_VOICE = process.env.VOICE_REALTIME_VOICE ?? 'marin'
+const VOICE_REASONING_EFFORT = process.env.VOICE_REALTIME_REASONING_EFFORT ?? 'high'
 
 // POST /api/voice/session
 // Mints an OpenAI Realtime ephemeral client_secret with the family-scoped
@@ -31,6 +32,11 @@ export async function POST() {
         type: 'realtime',
         model: VOICE_MODEL,
         instructions,
+        // gpt-realtime-2 introduced reasoning_effort (minimal|low|medium|high|xhigh).
+        // The openai SDK (6.37.0) hasn't published the type for it yet; runtime
+        // accepts it. Remove this directive once the SDK types catch up.
+        // @ts-expect-error -- SDK types lag the API release
+        reasoning_effort: VOICE_REASONING_EFFORT,
         output_modalities: ['audio'],
         audio: {
           output: { voice: VOICE_VOICE },

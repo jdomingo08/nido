@@ -71,9 +71,7 @@ export async function dispatchTool(
     case 'add_activity':
       return ok(await handleAddActivity(parsed.data as AddActivityArgs, familyId))
     case 'add_personal_activity':
-      return ok(
-        await handleAddPersonalActivity(parsed.data as AddPersonalActivityArgs, familyId)
-      )
+      return ok(await handleAddPersonalActivity(parsed.data as AddPersonalActivityArgs, familyId))
     case 'set_activity_status':
       return ok(await handleSetActivityStatus(parsed.data as SetActivityStatusArgs, familyId))
     case 'remove_personal_activity':
@@ -350,10 +348,7 @@ async function handleAddActivity(args: AddActivityArgs, familyId: string) {
   }
 
   // Resolve kid_names → kid_ids (case-insensitive). Drop unmatched names.
-  const { data: kids } = await supabase
-    .from('kids')
-    .select('id, name')
-    .eq('family_id', familyId)
+  const { data: kids } = await supabase.from('kids').select('id, name').eq('family_id', familyId)
   const lowerNames = args.kid_names.map((n) => n.trim().toLowerCase())
   const matched = (kids ?? []).filter((k) => lowerNames.includes(k.name.toLowerCase()))
   if (matched.length === 0) {
@@ -465,10 +460,7 @@ async function handleSetActivityStatus(args: SetActivityStatusArgs, familyId: st
   return { activity_id: row.id, title: row.title, day: row.day, status: row.status }
 }
 
-async function handleRemovePersonalActivity(
-  args: RemovePersonalActivityArgs,
-  familyId: string
-) {
+async function handleRemovePersonalActivity(args: RemovePersonalActivityArgs, familyId: string) {
   const supabase = await createSupabaseServerClient()
   const { data: row, error } = await supabase
     .from('personal_activities')
@@ -491,11 +483,7 @@ async function handleRemovePersonalActivity(
 
 async function handleRegenerateDay(args: RegenerateDayArgs, familyId: string) {
   const supabase = await createSupabaseServerClient()
-  const { data: family } = await supabase
-    .from('families')
-    .select('*')
-    .eq('id', familyId)
-    .single()
+  const { data: family } = await supabase.from('families').select('*').eq('id', familyId).single()
   if (!family) {
     return { ok: false, error: 'family_not_found' }
   }
