@@ -30,6 +30,25 @@ export const SuggestTimeSlotInput = z.object({
   )
 })
 
+export const SearchLocalEventsInput = z.object({
+  days_ahead: z
+    .number()
+    .int()
+    .min(1)
+    .max(14)
+    .optional()
+    .describe(
+      'How many days from today to search (1-14). Defaults to 7 (rest of this week + weekend).'
+    ),
+  focus: z
+    .string()
+    .max(80)
+    .optional()
+    .describe(
+      "Optional narrowing topic, e.g. 'library storytimes', 'outdoor', 'park events for toddlers', 'mom meetups'. Omit for broad family search."
+    )
+})
+
 export const GetWeatherInput = z.object({
   day: z
     .enum(['today', 'tomorrow', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'])
@@ -166,6 +185,13 @@ export const VOICE_TOOLS: Record<string, VoiceTool> = {
     description:
       "Read the live weather forecast for the family's city. Use whenever the user asks about the weather — today, tomorrow, the rest of the week, or a specific day. Returns current conditions plus a per-day morning/afternoon/evening summary, and (if a single day is requested) the hourly forecast for that day.",
     schema: GetWeatherInput
+  },
+  search_local_events: {
+    name: 'search_local_events',
+    kind: 'read',
+    description:
+      "Search the live web for real upcoming family-friendly events near the family's city — library storytimes, park programs, children's museum events, free outdoor activities, mom/parent meetups, etc. Use whenever the parent asks what's happening locally, what to do this weekend, where to take the kids, or for ideas outside the home. Returns up to ~12 events with venue, date/time, audience, and a URL when available. Cached 24 hours per city so repeated calls in the same day are cheap.",
+    schema: SearchLocalEventsInput
   },
   add_activity: {
     name: 'add_activity',

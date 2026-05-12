@@ -15,6 +15,7 @@ import {
   getPersonalActivitiesForWeek,
   type ScheduledPersonalActivity
 } from '@/domains/personal/server/queries'
+import { searchLocalEvents } from '@/lib/local-events'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { fetchCurrentWeatherForCity, fetchForecastForCity } from '@/lib/weather/openmeteo'
 import {
@@ -24,6 +25,7 @@ import {
   QueryScheduleInput,
   RegenerateDayInput,
   RemovePersonalActivityInput,
+  SearchLocalEventsInput,
   SetActivityStatusInput,
   SuggestTimeSlotInput,
   VOICE_TOOLS,
@@ -68,6 +70,8 @@ export async function dispatchTool(
       return ok(await handleSuggestTimeSlot(parsed.data as SuggestTimeSlotArgs, familyId))
     case 'get_weather':
       return ok(await handleGetWeather(parsed.data as GetWeatherArgs, familyId))
+    case 'search_local_events':
+      return ok(await handleSearchLocalEvents(parsed.data as SearchLocalEventsArgs, familyId))
     case 'add_activity':
       return ok(await handleAddActivity(parsed.data as AddActivityArgs, familyId))
     case 'add_personal_activity':
@@ -94,6 +98,7 @@ function ok(result: unknown): DispatchResult {
 type QueryScheduleArgs = ReturnType<typeof QueryScheduleInput.parse>
 type SuggestTimeSlotArgs = ReturnType<typeof SuggestTimeSlotInput.parse>
 type GetWeatherArgs = ReturnType<typeof GetWeatherInput.parse>
+type SearchLocalEventsArgs = ReturnType<typeof SearchLocalEventsInput.parse>
 type AddActivityArgs = ReturnType<typeof AddActivityInput.parse>
 type AddPersonalActivityArgs = ReturnType<typeof AddPersonalActivityInput.parse>
 type SetActivityStatusArgs = ReturnType<typeof SetActivityStatusInput.parse>
@@ -295,6 +300,61 @@ async function handleGetWeather(args: GetWeatherArgs, familyId: string) {
       : null,
     days,
     focus
+  }
+}
+
+async function handleSearchLocalEvents(args: SearchLocalEventsArgs, familyId: string) {
+  const supabase = await createSupabaseServerClient()
+  const { data: family } = await supabase
+    .from('families')
+    .select('city')
+    .eq('id', familyId)
+    .maybeSingle()
+  const city = family?.city ?? null
+  if (!city) {
+    return {
+      ok: false,
+      error: 'no_city_on_family',
+      message: 'No city set on the family profile yet. Ask the parent to set it in Settings.'
+    }
+  }
+
+  const today = new Date()
+  const days = args.days_ahead ?? 7
+  const end = new Date(today)
+  end.setDate(end.getDate() + days)
+
+  const baseQuery = await searchLocalEvents({
+    city,
+    startDate: isoDate(today),
+    endDate: isoDate(end),
+    maxResults: 12
+  })
+
+  // If the model asked for a focused topic, filter post-hoc on title/description
+  // instead of round-tripping the provider again — it's cached and 12 events is small.
+  const focus = args.focus?.trim().toLowerCase()
+  const filtered = focus
+    ? baseQuery.events.filter((e) =>
+        `${e.title} ${e.venue ?? ''} ${e.description}`.toLowerCase().includes(focus)
+      )
+    : baseQuery.events
+
+  return {
+    city,
+    days_ahead: days,
+    focus: args.focus ?? null,
+    cached: baseQuery.cached,
+    events: filtered.map((e) => ({
+      title: e.title,
+      venue: e.venue,
+      when: e.start,
+      audience: e.audience,
+      category: e.category,
+      cost: e.cost,
+      url: e.url,
+      blurb: e.description
+    }))
   }
 }
 

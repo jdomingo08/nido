@@ -14,6 +14,7 @@ import {
   summarizeForLlm,
   type DayForecast
 } from '@/lib/weather/openmeteo'
+import { searchLocalEvents, type LocalEvent } from '@/lib/local-events'
 import {
   getPersonalActivitiesForWeek,
   type ScheduledPersonalActivity
@@ -244,6 +245,46 @@ function summarizePersonalActivities(items: ScheduledPersonalActivity[]): string
     .join('\n')
 }
 
+async function fetchForecastBestEffort(
+  city: string | null,
+  startDate: Date
+): Promise<DayForecast[]> {
+  if (!city) return []
+  try {
+    const coords = await geocodeCity(city)
+    if (!coords) return []
+    return await fetchWeekForecast({ lat: coords.lat, lon: coords.lon, startDate })
+  } catch {
+    return []
+  }
+}
+
+async function fetchLocalEventsBestEffort(
+  city: string | null,
+  startDate: string,
+  endDate: string
+): Promise<LocalEvent[]> {
+  if (!city) return []
+  try {
+    const result = await searchLocalEvents({ city, startDate, endDate, maxResults: 12 })
+    return result.events
+  } catch (e) {
+    console.warn('[orchestrator] local-events fetch failed', e)
+    return []
+  }
+}
+
+function summarizeLocalEvents(events: LocalEvent[]): string {
+  if (events.length === 0) return '(none found this week)'
+  return events
+    .map((e) => {
+      const venue = e.venue ? ` at ${e.venue}` : ''
+      const cost = e.cost ? ` — ${e.cost}` : ''
+      return `- ${e.start}: ${e.title}${venue} (${e.audience}, ${e.category})${cost}`
+    })
+    .join('\n')
+}
+
 function buildUserPrompt(args: {
   weekStartDate: string
   household: string
@@ -258,6 +299,7 @@ function buildUserPrompt(args: {
   constraints: string[]
   dislikes: string[]
   forecast: DayForecast[]
+  localEvents: LocalEvent[]
   personalActivities: ScheduledPersonalActivity[]
 }): string {
   const kidLines = args.kids
@@ -276,6 +318,7 @@ function buildUserPrompt(args: {
 
   const forecastBlock = summarizeForLlm(args.forecast)
   const personalBlock = summarizePersonalActivities(args.personalActivities)
+  const eventsBlock = summarizeLocalEvents(args.localEvents)
 
   return `Generate a week plan starting Monday ${args.weekStartDate}.
 
@@ -312,6 +355,14 @@ windows, assume the parent is fully out and a caregiver covers; for in-home
 busy windows the parent is around for safety but not engagement. NEVER skip
 a slot entirely just because the parent is busy.
 ${personalBlock}
+
+Real local community events near the family this week (slot 1-2 of these
+into the plan when the date and audience fit naturally — e.g. a Saturday
+library storytime becomes the morning kid activity for that day; an outdoor
+festival becomes the family outing slot. Use the title and venue as the
+activity title. Do NOT invent attendance details — only schedule events that
+are explicitly listed below):
+${eventsBlock}
 
 Output requirements:
 - Return all SEVEN days as named keys: mon, tue, wed, thu, fri, sat, sun.
@@ -398,23 +449,16 @@ async function planWeekInner(weekStartIso: string): Promise<{
 
   const nPerDay = densityPerDay(family.density)
 
-  // Fetch a real 7-day forecast (Open-Meteo, no API key required) when we have a city.
-  // Failure is non-fatal — we still generate a week, just without weather context.
-  let forecast: DayForecast[] = []
-  if (family.city) {
-    try {
-      const coords = await geocodeCity(family.city)
-      if (coords) {
-        forecast = await fetchWeekForecast({
-          lat: coords.lat,
-          lon: coords.lon,
-          startDate: weekStartDate
-        })
-      }
-    } catch {
-      // Swallow weather errors — orchestrator should still run.
-    }
-  }
+  // Fetch a real 7-day forecast (Open-Meteo, no API key required) and live
+  // local events for the week in parallel. Both need `family.city`; both are
+  // best-effort — failures are swallowed so the orchestrator still runs.
+  const weekEndDate = new Date(weekStartDate)
+  weekEndDate.setDate(weekEndDate.getDate() + 6)
+
+  const [forecast, localEvents] = await Promise.all([
+    fetchForecastBestEffort(family.city, weekStartDate),
+    fetchLocalEventsBestEffort(family.city, weekStartIso, isoDate(weekEndDate))
+  ])
 
   // Pull personal activities so the orchestrator respects the household calendar.
   const personalActivities = await getPersonalActivitiesForWeek(family.id, weekStartDate)
@@ -434,6 +478,7 @@ async function planWeekInner(weekStartIso: string): Promise<{
     constraints,
     dislikes,
     forecast,
+    localEvents,
     personalActivities
   })
 
