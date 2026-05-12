@@ -32,11 +32,12 @@ export async function POST() {
         type: 'realtime',
         model: VOICE_MODEL,
         instructions,
-        // gpt-realtime-2 introduced reasoning_effort (minimal|low|medium|high|xhigh).
-        // The openai SDK (6.37.0) hasn't published the type for it yet; runtime
-        // accepts it. Remove this directive once the SDK types catch up.
+        // gpt-realtime-2 introduced configurable reasoning effort
+        // (minimal|low|medium|high|xhigh). Field is nested as
+        // session.reasoning.effort — not the top-level `reasoning_effort` that
+        // the announcement post implied. SDK types lag the API release.
         // @ts-expect-error -- SDK types lag the API release
-        reasoning_effort: VOICE_REASONING_EFFORT,
+        reasoning: { effort: VOICE_REASONING_EFFORT },
         output_modalities: ['audio'],
         audio: {
           output: { voice: VOICE_VOICE },
