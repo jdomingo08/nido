@@ -30,7 +30,10 @@ describe('finances encryption', () => {
     const enc = encryptToken('access-token')
     const tampered = {
       ...enc,
-      ciphertext: Buffer.concat([enc.ciphertext.subarray(0, enc.ciphertext.length - 1), Buffer.from([0])])
+      ciphertext: Buffer.concat([
+        enc.ciphertext.subarray(0, enc.ciphertext.length - 1),
+        Buffer.from([0])
+      ])
     }
     expect(() => decryptToken(tampered)).toThrow()
   })

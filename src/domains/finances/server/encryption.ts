@@ -18,9 +18,7 @@ function loadKey(): Buffer {
   }
   const key = Buffer.from(b64, 'base64')
   if (key.length !== KEY_BYTES) {
-    throw new Error(
-      `FINANCES_ENCRYPTION_KEY must decode to ${KEY_BYTES} bytes (got ${key.length})`
-    )
+    throw new Error(`FINANCES_ENCRYPTION_KEY must decode to ${KEY_BYTES} bytes (got ${key.length})`)
   }
   return key
 }
