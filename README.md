@@ -46,6 +46,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | [Upstash](https://upstash.com) | Rate limiting | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` |
 | [OpenWeatherMap](https://openweathermap.org/api) | Weather agent | `OPENWEATHER_API_KEY` |
 | [Vercel](https://vercel.com) | Hosting + cron | (set via `vercel link`) |
+| [Plaid](https://dashboard.plaid.com) | Bank + card aggregation (Finances) | `PLAID_CLIENT_ID`, `PLAID_SECRET_SANDBOX`, `PLAID_ENV`, `PLAID_PRODUCTS`, `PLAID_COUNTRY_CODES`, `FINANCES_ENCRYPTION_KEY` |
 | [Sentry](https://sentry.io) (optional) | Error tracking | `NEXT_PUBLIC_SENTRY_DSN` etc. |
 
 ## Scripts
@@ -109,5 +110,7 @@ scripts/                   # one-off scripts (TBD)
 
 **Phase 0 — Infra & scaffolding.** Complete.
 Next up: Phase 1 — Auth + family model + onboarding.
+
+**Phase F1 — Finances foundation.** Entity model + Plaid Link end-to-end (sandbox). Next: F2 transactions sync.
 
 See `docs/implementation-plan-v0.2.md` §14 for the full phase plan.
