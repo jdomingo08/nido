@@ -7,13 +7,20 @@ import { AdultsSection } from './adults-section'
 import { FamilySection } from './family-section'
 import { KidsSection } from './kids-section'
 import { PreferencesSection } from './preferences-section'
+import { FinancesSection } from '@/domains/finances/client/FinancesSection'
+import { listMyConnections } from '@/domains/finances/server/list-connections'
 
 export default async function SettingsPage() {
   const { user, family } = await requireFamily()
   const supabase = await createSupabaseServerClient()
 
-  const [{ data: kids }, { data: preferences }, { data: members }, { data: invitations }] =
-    await Promise.all([
+  const [
+    { data: kids },
+    { data: preferences },
+    { data: members },
+    { data: invitations },
+    connections
+  ] = await Promise.all([
       supabase
         .from('kids')
         .select('*')
@@ -34,7 +41,8 @@ export default async function SettingsPage() {
         .select('*')
         .eq('family_id', family.id)
         .eq('status', 'pending')
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false }),
+      listMyConnections()
     ])
 
   // Augment members with their auth email so the UI can show "you · jane@x.com".
@@ -104,6 +112,7 @@ export default async function SettingsPage() {
           />
           <KidsSection kids={kids ?? []} />
           <PreferencesSection preferences={preferences ?? []} />
+          <FinancesSection data={connections} />
         </div>
       </div>
     </main>
