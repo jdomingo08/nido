@@ -11,5 +11,13 @@
   "onboarding": {
     "welcome": "bienvenido",
     "step": "paso {current} de {total}"
+  },
+  "finances": {
+    "title": "finanzas",
+    "description": "conecta cuentas bancarias y tarjetas para rastrear el flujo de efectivo familiar.",
+    "noEntities": "aún no hay entidades — completa la configuración para crear tu hogar.",
+    "noConnections": "sin conexiones todavía.",
+    "connectFirst": "conectar banco o tarjeta",
+    "connectAnother": "conectar otra"
   }
 }

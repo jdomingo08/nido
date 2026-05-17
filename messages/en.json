@@ -11,5 +11,13 @@
   "onboarding": {
     "welcome": "welcome",
     "step": "step {current} of {total}"
+  },
+  "finances": {
+    "title": "finances",
+    "description": "connect bank and card accounts to track family cashflow.",
+    "noEntities": "no entities yet — finish onboarding to create your household.",
+    "noConnections": "no connections yet.",
+    "connectFirst": "connect a bank or card",
+    "connectAnother": "connect another"
   }
 }
