@@ -15,7 +15,10 @@ function getClient(): Redis | null {
 }
 
 function normalizeCity(city: string): string {
-  return city.trim().toLowerCase().replace(/[\s,]+/g, '-')
+  return city
+    .trim()
+    .toLowerCase()
+    .replace(/[\s,]+/g, '-')
 }
 
 // Cache key buckets shared across all families in the same locale + week, so a

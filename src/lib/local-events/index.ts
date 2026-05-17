@@ -1,10 +1,6 @@
 import { getCachedEvents, setCachedEvents } from './cache'
 import { fetchEventsFromProvider } from './provider'
-import type {
-  LocalEvent,
-  SearchLocalEventsOptions,
-  SearchLocalEventsResult
-} from './types'
+import type { LocalEvent, SearchLocalEventsOptions, SearchLocalEventsResult } from './types'
 
 export type {
   LocalEvent,
