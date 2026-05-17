@@ -18,7 +18,7 @@ describe('finances Zod schemas', () => {
   it('parses a valid Plaid exchange payload', () => {
     const parsed = ExchangePublicTokenSchema.parse({
       public_token: 'public-sandbox-abc-123',
-      entity_id: '11111111-1111-1111-1111-111111111111',
+      entity_id: '12345678-1234-4123-8123-123456789012',
       institution: { id: 'ins_1', name: 'Chase' },
       accounts: [
         { id: 'acc_1', name: 'Plat Card', mask: '0001', type: 'credit', subtype: 'credit card' }
@@ -30,7 +30,7 @@ describe('finances Zod schemas', () => {
   it('rejects an exchange payload missing public_token', () => {
     expect(() =>
       ExchangePublicTokenSchema.parse({
-        entity_id: '11111111-1111-1111-1111-111111111111',
+        entity_id: '12345678-1234-4123-8123-123456789012',
         institution: { id: 'ins_1', name: 'Chase' },
         accounts: []
       })

@@ -26,7 +26,7 @@ const AccountSchema = z.object({
 
 export const ExchangePublicTokenSchema = z.object({
   public_token: z.string().min(1).max(200),
-  entity_id: z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i),
+  entity_id: z.string().uuid(),
   institution: InstitutionSchema,
   accounts: z.array(AccountSchema).min(0).max(50)
 })
