@@ -8,6 +8,12 @@
     "cancel": "cancel",
     "loading": "loading…"
   },
+  "auth": {
+    "subtitle": "sign in to plan your family's week.",
+    "continueWithGoogle": "continue with Google",
+    "signingIn": "signing in…",
+    "error": "couldn't sign you in. please try again."
+  },
   "onboarding": {
     "welcome": "welcome",
     "step": "step {current} of {total}"

@@ -8,6 +8,12 @@
     "cancel": "cancelar",
     "loading": "cargando…"
   },
+  "auth": {
+    "subtitle": "inicia sesión para planificar la semana de tu familia.",
+    "continueWithGoogle": "continuar con Google",
+    "signingIn": "iniciando sesión…",
+    "error": "no pudimos iniciar tu sesión. inténtalo de nuevo."
+  },
   "onboarding": {
     "welcome": "bienvenido",
     "step": "paso {current} de {total}"
