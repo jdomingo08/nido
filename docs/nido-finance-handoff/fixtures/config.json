@@ -1,0 +1,352 @@
+{
+  "meta": {
+    "employer": "Entravision Communications",
+    "job": "VP, Strategy & Programs",
+    "frequency": "Semi-Monthly",
+    "checksPerYear": 24,
+    "perCheckGross": 4936.77,
+    "perCheckNet": 3656.69,
+    "perCheckTax": 696.37,
+    "perCheckDed": 583.71
+  },
+  "ytdOfficial": {
+    "asOf": "2026-05-31",
+    "gross": 59367.7,
+    "fitTaxable": 53538.2,
+    "taxes": 9916.07,
+    "deductions": 5829.5,
+    "net": 43622.13,
+    "regularGross": 49367.7,
+    "bonusGross": 10000.0
+  },
+  "paychecks": [
+    {
+      "id": "2026-01-a",
+      "payDate": "2026-01-15",
+      "periodStart": "2026-01-01",
+      "periodEnd": "2026-01-15",
+      "gross": 4936.77,
+      "taxes": 696.37,
+      "deductions": 583.71,
+      "net": 3656.69,
+      "bonus": 0,
+      "type": "Regular",
+      "source": "reconstructed"
+    },
+    {
+      "id": "2026-01-b",
+      "payDate": "2026-01-31",
+      "periodStart": "2026-01-16",
+      "periodEnd": "2026-01-31",
+      "gross": 4936.77,
+      "taxes": 696.37,
+      "deductions": 583.71,
+      "net": 3656.69,
+      "bonus": 0,
+      "type": "Regular",
+      "source": "reconstructed"
+    },
+    {
+      "id": "2026-02-a",
+      "payDate": "2026-02-15",
+      "periodStart": "2026-02-01",
+      "periodEnd": "2026-02-15",
+      "gross": 4936.77,
+      "taxes": 696.37,
+      "deductions": 583.71,
+      "net": 3656.69,
+      "bonus": 0,
+      "type": "Regular",
+      "source": "reconstructed"
+    },
+    {
+      "id": "2026-02-b",
+      "payDate": "2026-02-28",
+      "periodStart": "2026-02-16",
+      "periodEnd": "2026-02-28",
+      "gross": 4936.77,
+      "taxes": 696.37,
+      "deductions": 583.71,
+      "net": 3656.69,
+      "bonus": 0,
+      "type": "Regular",
+      "source": "reconstructed"
+    },
+    {
+      "id": "2026-03-a",
+      "payDate": "2026-03-15",
+      "periodStart": "2026-03-01",
+      "periodEnd": "2026-03-15",
+      "gross": 4936.77,
+      "taxes": 696.37,
+      "deductions": 583.71,
+      "net": 3656.69,
+      "bonus": 0,
+      "type": "Regular",
+      "source": "reconstructed"
+    },
+    {
+      "id": "2026-03-b",
+      "payDate": "2026-03-31",
+      "periodStart": "2026-03-16",
+      "periodEnd": "2026-03-31",
+      "gross": 4936.77,
+      "taxes": 696.37,
+      "deductions": 583.71,
+      "net": 3656.69,
+      "bonus": 0,
+      "type": "Regular",
+      "source": "reconstructed"
+    },
+    {
+      "id": "2026-04-a",
+      "payDate": "2026-04-15",
+      "periodStart": "2026-04-01",
+      "periodEnd": "2026-04-15",
+      "gross": 4936.77,
+      "taxes": 696.37,
+      "deductions": 583.71,
+      "net": 3656.69,
+      "bonus": 0,
+      "type": "Regular",
+      "source": "reconstructed"
+    },
+    {
+      "id": "2026-04-b",
+      "payDate": "2026-04-30",
+      "periodStart": "2026-04-16",
+      "periodEnd": "2026-04-30",
+      "gross": 4936.77,
+      "taxes": 696.37,
+      "deductions": 583.71,
+      "net": 3656.69,
+      "bonus": 0,
+      "type": "Regular",
+      "source": "reconstructed"
+    },
+    {
+      "id": "2026-05-a",
+      "payDate": "2026-05-15",
+      "periodStart": "2026-05-01",
+      "periodEnd": "2026-05-15",
+      "gross": 4936.77,
+      "taxes": 696.37,
+      "deductions": 583.71,
+      "net": 3656.69,
+      "bonus": 0,
+      "type": "Regular",
+      "source": "reconstructed"
+    },
+    {
+      "id": "2026-05-b",
+      "payDate": "2026-05-29",
+      "periodStart": "2026-05-16",
+      "periodEnd": "2026-05-31",
+      "gross": 4936.77,
+      "taxes": 696.37,
+      "deductions": 583.71,
+      "net": 3656.69,
+      "bonus": 0,
+      "type": "Regular",
+      "source": "stub",
+      "detail": {
+        "Federal Income Tax": 340.7,
+        "Employee Medicare": 67.41,
+        "Social Security": 288.26,
+        "401K Fidelity": 296.21,
+        "Entravision FL": 281.12,
+        "Vision Sec 125": 6.38
+      }
+    },
+    {
+      "id": "2026-06-a",
+      "payDate": "2026-06-15",
+      "periodStart": "2026-06-01",
+      "periodEnd": "2026-06-15",
+      "gross": 4936.77,
+      "taxes": 696.37,
+      "deductions": 583.71,
+      "net": 3656.69,
+      "bonus": 0,
+      "type": "Regular",
+      "source": "projected"
+    },
+    {
+      "id": "2026-06-b",
+      "payDate": "2026-06-30",
+      "periodStart": "2026-06-16",
+      "periodEnd": "2026-06-30",
+      "gross": 4936.77,
+      "taxes": 696.37,
+      "deductions": 583.71,
+      "net": 3656.69,
+      "bonus": 0,
+      "type": "Regular",
+      "source": "projected"
+    },
+    {
+      "id": "2026-07-a",
+      "payDate": "2026-07-15",
+      "periodStart": "2026-07-01",
+      "periodEnd": "2026-07-15",
+      "gross": 4936.77,
+      "taxes": 696.37,
+      "deductions": 583.71,
+      "net": 3656.69,
+      "bonus": 0,
+      "type": "Regular",
+      "source": "projected"
+    },
+    {
+      "id": "2026-07-b",
+      "payDate": "2026-07-31",
+      "periodStart": "2026-07-16",
+      "periodEnd": "2026-07-31",
+      "gross": 4936.77,
+      "taxes": 696.37,
+      "deductions": 583.71,
+      "net": 3656.69,
+      "bonus": 0,
+      "type": "Regular",
+      "source": "projected"
+    }
+  ],
+  "recurringIncome": [
+    {
+      "id": "rec-alberto-car",
+      "name": "Alberto Domingo \u2014 car repayment",
+      "amount": 261.12,
+      "type": "Other income"
+    },
+    {
+      "id": "rec-alberto-loan",
+      "name": "Alberto Domingo \u2014 loan repayment",
+      "amount": 173.33,
+      "type": "Other income"
+    },
+    {
+      "id": "rec-alberto-verizon",
+      "name": "Alberto Domingo \u2014 Verizon repayment",
+      "amount": 36.18,
+      "type": "Other income"
+    },
+    {
+      "id": "rec-robinhood",
+      "name": "Interest income \u2014 Robinhood",
+      "amount": 276.0,
+      "type": "Interest income"
+    },
+    {
+      "id": "rec-openbank",
+      "name": "Interest income \u2014 Openbank",
+      "amount": 161.0,
+      "type": "Interest income"
+    },
+    {
+      "id": "rec-bonus",
+      "name": "Annual bonus (amortized)",
+      "amount": 587.94,
+      "type": "Bonus"
+    }
+  ],
+  "fixedExpenses": [
+    {
+      "id": "fx-mortgage",
+      "name": "Mortgage",
+      "amount": 1653.71,
+      "category": "Mortgage"
+    },
+    {
+      "id": "fx-hoa",
+      "name": "HOA \u2014 Costa del Sol",
+      "amount": 1000.0,
+      "category": "HOA"
+    },
+    {
+      "id": "fx-fpl",
+      "name": "FPL \u2014 electricity",
+      "amount": 240.51,
+      "category": "Utilities",
+      "schedule": {
+        "2026-01": 213.41,
+        "2026-02": 182.42,
+        "2026-03": 213.77,
+        "2026-04": 184.52,
+        "2026-05": 269.47,
+        "2026-06": 285.0,
+        "2026-07": 335.0
+      }
+    },
+    {
+      "id": "fx-verizon",
+      "name": "Verizon",
+      "amount": 238.0,
+      "category": "Phone"
+    },
+    {
+      "id": "fx-tesla",
+      "name": "Tesla car payment",
+      "amount": 791.41,
+      "category": "Auto Loan"
+    },
+    {
+      "id": "fx-studentloan",
+      "name": "Student loan \u2014 Dept. of Education",
+      "amount": 520.47,
+      "category": "Student Loan",
+      "schedule": {
+        "2026-06": 0,
+        "2026-07": 0
+      }
+    },
+    {
+      "id": "fx-kidstrong",
+      "name": "Kid's Strong",
+      "amount": 159.0,
+      "category": "Kids & Activities"
+    },
+    {
+      "id": "fx-netflix",
+      "name": "Netflix",
+      "amount": 22.0,
+      "category": "Subscriptions"
+    },
+    {
+      "id": "fx-swim",
+      "name": "Amelia \u2014 swimming lessons",
+      "amount": 80.0,
+      "category": "Kids & Activities",
+      "schedule": {
+        "2026-01": 0,
+        "2026-02": 0,
+        "2026-03": 0,
+        "2026-04": 0,
+        "2026-05": 0,
+        "2026-06": 0
+      }
+    }
+  ],
+  "oneOffIncome": [
+    {
+      "id": "oi-rh-cb1",
+      "month": "2026-07",
+      "name": "Robinhood card cashback",
+      "amount": 22.44,
+      "type": "Other income"
+    },
+    {
+      "id": "oi-rh-cb2",
+      "month": "2026-07",
+      "name": "Robinhood card cashback",
+      "amount": 26.72,
+      "type": "Other income"
+    },
+    {
+      "id": "oi-rh-cb3",
+      "month": "2026-07",
+      "name": "Robinhood card cashback",
+      "amount": 84.19,
+      "type": "Other income"
+    }
+  ]
+}
