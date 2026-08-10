@@ -17,5 +17,60 @@
   "onboarding": {
     "welcome": "bienvenido",
     "step": "paso {current} de {total}"
+  },
+  "finance": {
+    "title": "finanzas",
+    "categories": {
+      "dining_takeout": "Restaurantes y comida",
+      "groceries_household": "Supermercado y hogar",
+      "shopping_retail": "Compras",
+      "business_software": "Negocio y software",
+      "investments": "Inversiones",
+      "insurance": "Seguros",
+      "personal_care_beauty": "Cuidado personal y belleza",
+      "health_medical": "Salud",
+      "entertainment_recreation": "Entretenimiento y ocio",
+      "transportation_auto": "Transporte y auto",
+      "subscriptions": "Suscripciones",
+      "travel": "Viajes",
+      "pets": "Mascotas",
+      "taxes_fees": "Impuestos y tasas",
+      "housing_home": "Vivienda y hogar",
+      "mortgage": "Hipoteca",
+      "hoa": "HOA",
+      "utilities": "Servicios públicos",
+      "phone": "Teléfono",
+      "auto_loan": "Préstamo del auto",
+      "student_loan": "Préstamo estudiantil",
+      "kids_activities": "Niños y actividades",
+      "uncategorized": "Sin categoría",
+      "credits_rewards": "Créditos y recompensas",
+      "card_payment": "Pago de tarjeta"
+    },
+    "segments": {
+      "essential": "Esencial",
+      "lifestyle": "Estilo de vida",
+      "business": "Negocio",
+      "investment": "Inversión",
+      "unassigned": "Sin asignar",
+      "adjustments": "Ajustes"
+    },
+    "pnl": {
+      "title": "estado de resultados",
+      "income": "Ingresos",
+      "salary": "Salario",
+      "bonus": "Bono",
+      "other": "Otros",
+      "interest": "Intereses",
+      "totalIncome": "Ingresos totales",
+      "totalNetSpend": "Gasto neto total",
+      "net": "Neto (ahorro)",
+      "ytd": "Acumulado",
+      "avgMonth": "Prom/mes",
+      "pctOfSpend": "%",
+      "fixed": "fijo",
+      "memo": "Nota — excluido del gasto: pagos de tarjeta {payments} · créditos del estado {credits}",
+      "partialNote": "* mes parcial"
+    }
   }
 }

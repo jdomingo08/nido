@@ -6,3 +6,5 @@ dist
 build
 coverage
 messages
+docs/nido-finance-handoff/reference
+docs/nido-finance-handoff/fixtures

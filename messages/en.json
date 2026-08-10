@@ -17,5 +17,60 @@
   "onboarding": {
     "welcome": "welcome",
     "step": "step {current} of {total}"
+  },
+  "finance": {
+    "title": "finances",
+    "categories": {
+      "dining_takeout": "Dining & Takeout",
+      "groceries_household": "Groceries & Household",
+      "shopping_retail": "Shopping & Retail",
+      "business_software": "Business & Software",
+      "investments": "Investments",
+      "insurance": "Insurance",
+      "personal_care_beauty": "Personal Care & Beauty",
+      "health_medical": "Health & Medical",
+      "entertainment_recreation": "Entertainment & Recreation",
+      "transportation_auto": "Transportation & Auto",
+      "subscriptions": "Subscriptions",
+      "travel": "Travel",
+      "pets": "Pets",
+      "taxes_fees": "Taxes & Fees",
+      "housing_home": "Housing & Home",
+      "mortgage": "Mortgage",
+      "hoa": "HOA",
+      "utilities": "Utilities",
+      "phone": "Phone",
+      "auto_loan": "Auto Loan",
+      "student_loan": "Student Loan",
+      "kids_activities": "Kids & Activities",
+      "uncategorized": "Uncategorized",
+      "credits_rewards": "Credits & Rewards",
+      "card_payment": "Card Payment"
+    },
+    "segments": {
+      "essential": "Essential",
+      "lifestyle": "Lifestyle",
+      "business": "Business",
+      "investment": "Investment",
+      "unassigned": "Unassigned",
+      "adjustments": "Adjustments"
+    },
+    "pnl": {
+      "title": "P&L statement",
+      "income": "Income",
+      "salary": "Salary",
+      "bonus": "Bonus",
+      "other": "Other",
+      "interest": "Interest",
+      "totalIncome": "Total income",
+      "totalNetSpend": "Total Net Spend",
+      "net": "Net (savings)",
+      "ytd": "YTD",
+      "avgMonth": "Avg/mo",
+      "pctOfSpend": "%",
+      "fixed": "fixed",
+      "memo": "Memo — excluded from spend: card payments {payments} · statement credits {credits}",
+      "partialNote": "* partial month"
+    }
   }
 }

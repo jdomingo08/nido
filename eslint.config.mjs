@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored reference implementation from the finance handoff package —
+    // kept verbatim as documentation, not project code.
+    "docs/nido-finance-handoff/reference/**",
   ]),
 ]);
 
