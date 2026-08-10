@@ -24,7 +24,7 @@ const DEFAULT_ONEOFF_MIN = 500
 
 export function computeDashboard(input: DashboardInput): DashboardModel {
   const {
-    csvText,
+    csvText = '',
     rules,
     overrides,
     excludedOneOffIds = [],
@@ -36,7 +36,7 @@ export function computeDashboard(input: DashboardInput): DashboardModel {
     oneOffMin = DEFAULT_ONEOFF_MIN
   } = input
 
-  const records = recordsFromCSV(csvText)
+  const records = input.records ?? recordsFromCSV(csvText)
   const totalRowsParsed = records.length
 
   let cardTxns = enrich(records, rules, overrides)

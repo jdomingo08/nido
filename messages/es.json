@@ -55,22 +55,44 @@
       "unassigned": "Sin asignar",
       "adjustments": "Ajustes"
     },
+    "empty": {
+      "body": "Aún no hay transacciones. Importa un CSV de la tarjeta de crédito para armar las cuentas.",
+      "hint": "Envía el CSV por POST a /api/finance/import, o ejecuta el script de seed con los datos incluidos."
+    },
     "pnl": {
       "title": "estado de resultados",
+      "category": "Categoría",
       "income": "Ingresos",
-      "salary": "Salario",
-      "bonus": "Bono",
-      "other": "Otros",
+      "salary": "Salario (neto)",
+      "bonus": "Bono (neto)",
+      "other": "Otros ingresos",
       "interest": "Intereses",
       "totalIncome": "Ingresos totales",
       "totalNetSpend": "Gasto neto total",
       "net": "Neto (ahorro)",
+      "subtotal": "Subtotal {segment}",
       "ytd": "Acumulado",
       "avgMonth": "Prom/mes",
-      "pctOfSpend": "%",
       "fixed": "fijo",
-      "memo": "Nota — excluido del gasto: pagos de tarjeta {payments} · créditos del estado {credits}",
-      "partialNote": "* mes parcial"
+      "partialNote": "* mes parcial",
+      "oneOffTitle": "Incluir / excluir cargos grandes",
+      "includeAll": "Incluir todos",
+      "excludeAll": "Excluir todos",
+      "includedBanner": "Todos los cargos puntuales están incluidos. Desmarca cualquiera para ver el estado sin él.",
+      "excludedBanner": "Excluyendo {count, plural, one {# cargo} other {# cargos}} por {total} — todas las cifras son netas de estos.",
+      "linkedCredits": "incl. {total} en créditos → neto {net}",
+      "included": "incluido",
+      "excluded": "excluido",
+      "memoTitle": "Nota — excluido del gasto",
+      "memoPayments": "Pagos a la tarjeta",
+      "memoCredits": "Créditos del estado y canjes de puntos",
+      "memoNote": "Los pagos a la tarjeta y los créditos de recompensas son transferencias/ajustes, no gasto, así que quedan fuera del estado de resultados.",
+      "paycheckNet": "Cheque de pago (neto)",
+      "verified": "verificado",
+      "oneOff": "puntual",
+      "close": "Cerrar ✕",
+      "drillTotal": "Total · {count, plural, one {# ítem} other {# ítems}}",
+      "drillEmpty": "No hay ítems en este mes."
     }
   }
 }

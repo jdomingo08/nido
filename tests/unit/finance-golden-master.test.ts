@@ -10,6 +10,8 @@ import {
   DEFAULT_RULES,
   KEY_BY_REFERENCE_NAME,
   computeDashboard,
+  enrich,
+  recordsFromCSV,
   round2,
   type CategoryKey,
   type DashboardModel,
@@ -187,6 +189,42 @@ describe('finance engine · golden master', () => {
   it('en messages cover every category with the exact reference display name', () => {
     for (const name of Object.keys(golden.categoryTotals)) {
       expect(enCategories[catKey(name)], name).toBe(name)
+    }
+  })
+
+  it('survives a database round-trip: stored-row shape reproduces the same totals', () => {
+    // Mirror of the mapping in data/queries.ts — a stored row is re-fed to
+    // the engine as a header-keyed record (Balance dropped, amount
+    // re-serialized). The P&L must match the CSV path cell for cell.
+    const csvText = readFileSync(path.join(FIXTURES, 'transactions.csv'), 'utf8')
+    const config = JSON.parse(readFileSync(path.join(FIXTURES, 'config.json'), 'utf8'))
+    const enriched = enrich(recordsFromCSV(csvText), DEFAULT_RULES)
+    const roundTripped = computeDashboard({
+      records: enriched.map((t) => ({
+        Date: t.date,
+        Time: t.time,
+        Cardholder: t.cardholder,
+        Amount: String(t.amount),
+        Points: String(t.points),
+        Status: t.status,
+        Type: t.type,
+        Merchant: t.merchant,
+        Description: t.description
+      })),
+      rules: DEFAULT_RULES,
+      paychecks: config.paychecks as Paycheck[],
+      recurringIncome: config.recurringIncome,
+      fixedExpenses: (
+        config.fixedExpenses as (Omit<FixedExpense, 'category'> & { category: string })[]
+      ).map((fx) => ({ ...fx, category: catKey(fx.category) })),
+      oneOffIncome: config.oneOffIncome,
+      scopeStart: '2026-01'
+    })
+    expect(round2(roundTripped.agg.total)).toBe(golden.totals.spend)
+    expect(round2(roundTripped.incNetTotal)).toBe(golden.totals.income)
+    expect(round2(roundTripped.ytdNetCash)).toBe(golden.totals.netCashFlow)
+    for (const [key, total] of Object.entries(roundTripped.agg.catTotals)) {
+      expect(round2(total as number), key).toBe(round2(model.agg.catTotals[key as CategoryKey]!))
     }
   })
 })

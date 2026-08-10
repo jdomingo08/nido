@@ -164,7 +164,10 @@ export interface LinearFit {
 }
 
 export interface DashboardInput {
-  csvText: string
+  csvText?: string
+  // Pre-parsed rows (e.g. loaded from the database) — takes precedence over
+  // csvText when provided.
+  records?: RawRecord[]
   rules: CategoryRule[]
   overrides?: MerchantOverrides
   excludedOneOffIds?: string[]

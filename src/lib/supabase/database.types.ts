@@ -394,6 +394,261 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_accounts: {
+        Row: {
+          created_at: string
+          currency: string
+          family_id: string
+          id: string
+          kind: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          family_id: string
+          id?: string
+          kind?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          family_id?: string
+          id?: string
+          kind?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      finance_category_rules: {
+        Row: {
+          category_key: string
+          created_at: string
+          family_id: string
+          id: string
+          match_text: string
+          match_type: string
+          priority: number
+        }
+        Insert: {
+          category_key: string
+          created_at?: string
+          family_id: string
+          id?: string
+          match_text: string
+          match_type?: string
+          priority?: number
+        }
+        Update: {
+          category_key?: string
+          created_at?: string
+          family_id?: string
+          id?: string
+          match_text?: string
+          match_type?: string
+          priority?: number
+        }
+        Relationships: []
+      }
+      finance_fixed_items: {
+        Row: {
+          active: boolean
+          amount: number
+          category_key: string
+          created_at: string
+          family_id: string
+          id: string
+          name: string
+          schedule: Json
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          amount: number
+          category_key: string
+          created_at?: string
+          family_id: string
+          id?: string
+          name: string
+          schedule?: Json
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          amount?: number
+          category_key?: string
+          created_at?: string
+          family_id?: string
+          id?: string
+          name?: string
+          schedule?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      finance_income: {
+        Row: {
+          bucket: string
+          created_at: string
+          deductions: number | null
+          detail: Json | null
+          family_id: string
+          gross: number | null
+          id: string
+          kind: string
+          month: string | null
+          name: string | null
+          net: number
+          pay_date: string | null
+          period_end: string | null
+          period_start: string | null
+          source: string
+          taxes: number | null
+          updated_at: string
+        }
+        Insert: {
+          bucket?: string
+          created_at?: string
+          deductions?: number | null
+          detail?: Json | null
+          family_id: string
+          gross?: number | null
+          id?: string
+          kind: string
+          month?: string | null
+          name?: string | null
+          net: number
+          pay_date?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          source?: string
+          taxes?: number | null
+          updated_at?: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          deductions?: number | null
+          detail?: Json | null
+          family_id?: string
+          gross?: number | null
+          id?: string
+          kind?: string
+          month?: string | null
+          name?: string | null
+          net?: number
+          pay_date?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          source?: string
+          taxes?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      finance_merchant_overrides: {
+        Row: {
+          category_key: string
+          family_id: string
+          merchant_key: string
+        }
+        Insert: {
+          category_key: string
+          family_id: string
+          merchant_key: string
+        }
+        Update: {
+          category_key?: string
+          family_id?: string
+          merchant_key?: string
+        }
+        Relationships: []
+      }
+      finance_settings: {
+        Row: {
+          budgets: Json
+          excluded_txns: Json
+          family_id: string
+          prefs: Json
+          updated_at: string
+        }
+        Insert: {
+          budgets?: Json
+          excluded_txns?: Json
+          family_id: string
+          prefs?: Json
+          updated_at?: string
+        }
+        Update: {
+          budgets?: Json
+          excluded_txns?: Json
+          family_id?: string
+          prefs?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      finance_transactions: {
+        Row: {
+          account_id: string | null
+          amount: number
+          cardholder: string | null
+          category_key: string
+          created_at: string
+          dedupe_key: string
+          description: string | null
+          family_id: string
+          id: string
+          merchant: string
+          points: number
+          posted_time: string | null
+          source: string
+          status: string
+          txn_date: string
+          txn_type: string
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount: number
+          cardholder?: string | null
+          category_key?: string
+          created_at?: string
+          dedupe_key: string
+          description?: string | null
+          family_id: string
+          id?: string
+          merchant: string
+          points?: number
+          posted_time?: string | null
+          source?: string
+          status?: string
+          txn_date: string
+          txn_type?: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          cardholder?: string | null
+          category_key?: string
+          created_at?: string
+          dedupe_key?: string
+          description?: string | null
+          family_id?: string
+          id?: string
+          merchant?: string
+          points?: number
+          posted_time?: string | null
+          source?: string
+          status?: string
+          txn_date?: string
+          txn_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       week_plans: {
         Row: {
           family_id: string

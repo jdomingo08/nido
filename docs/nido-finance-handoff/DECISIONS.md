@@ -220,3 +220,64 @@ That distinction — *structural position vs. one-off decisions* — is why the 
 4. **Robinhood card** — can an export be produced?
 5. **Uncategorized merchants** — tag the remaining 7.
 6. **CVS + hotel dates** — both defaulted to Jul 31; exact dates?
+
+---
+
+## 9. Port-time amendments (2026-08-10, Nido integration)
+
+Documented deviations from BRIEF.md / SCHEMA.sql, made while porting into
+Nido. None change any golden-master number.
+
+### dedupe_key gains an occurrence index `VERIFIED`
+
+BRIEF §6 defines `dedupe_key = hash(date, amount, merchant, status, type)`.
+Checked against the fixture, that formula collides on **4 pairs** of rows —
+three declined retry pairs (harmless) and one pair of **legitimate posted
+charges**: two OpenAI $10.00 purchases on 2026-03-15. A unique upsert on the
+documented key would silently collapse those into one row, drop $10 of real
+Business & Software spend, and break the golden master after a DB round-trip.
+
+Amended key: the plain composite string
+`date|amount|merchant_lower|status|type|n`, where `n` is the 0-based
+occurrence index of that tuple within the import file. Same file in → same
+keys out, so re-imports stay idempotent; genuinely identical same-day rows
+each keep a row. No hash — the composite is unique, shorter to debug, and
+needs no crypto in the pure engine.
+
+### Import supersedes by date range, not upsert alone `DERIVED`
+
+Pure upsert cannot express "re-imports supersede" (§1): a Pending row
+restated as Posted produces a *different* key (status is part of it), so the
+stale Pending row would linger and double-count. The import instead:
+
+1. upserts every incoming row on `(family_id, dedupe_key)`, then
+2. deletes `source='import'` rows inside the file's `[min_date, max_date]`
+   whose keys are absent from the file.
+
+Consequences, all matching documented history: a full refresh replaces
+restated months; the rejected May-only subset file (§1) becomes a graceful
+no-op (every key already present, nothing deleted); `source='manual'` rows
+are never touched; even an amount-changed restatement (pending pre-tip →
+posted with tip) supersedes cleanly.
+
+### Rules gain `match_type` (`substring`|`exact`) `DERIVED`
+
+The reference engine special-cases merchant `UPS` in code (substring `ups`
+would over-match, e.g. "cups"). Rules now live in `finance_category_rules`,
+so that special case becomes a data row with `match_type='exact'` instead of
+a hardcoded branch.
+
+### Paycheck provenance is a column, not a boolean `DERIVED`
+
+SCHEMA.sql modelled provenance as `is_estimate boolean`. The UI requires
+`verified / derived / est.` badges (VIEWS.md §2) and §3a requires provenance
+preserved, so `finance_income` stores
+`source in ('stub','reconstructed','projected','manual')` plus a `detail`
+jsonb for the verified stub's line items.
+
+### Category identity is a stable key `DERIVED`
+
+Per BRIEF §7, categories are stored as keys (`dining_takeout`), with
+English/Spanish display names in `messages/{en,es}.json`. The golden-master
+test asserts the English display names still match the reference spellings
+exactly.

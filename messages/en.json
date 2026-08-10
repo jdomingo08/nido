@@ -55,22 +55,44 @@
       "unassigned": "Unassigned",
       "adjustments": "Adjustments"
     },
+    "empty": {
+      "body": "No transactions yet. Import a credit-card CSV export to build the books.",
+      "hint": "POST the CSV to /api/finance/import, or run the seed script for the bundled dataset."
+    },
     "pnl": {
       "title": "P&L statement",
+      "category": "Category",
       "income": "Income",
-      "salary": "Salary",
-      "bonus": "Bonus",
-      "other": "Other",
-      "interest": "Interest",
+      "salary": "Salary (net)",
+      "bonus": "Bonus (net)",
+      "other": "Other income",
+      "interest": "Interest income",
       "totalIncome": "Total income",
       "totalNetSpend": "Total Net Spend",
       "net": "Net (savings)",
+      "subtotal": "{segment} subtotal",
       "ytd": "YTD",
       "avgMonth": "Avg/mo",
-      "pctOfSpend": "%",
       "fixed": "fixed",
-      "memo": "Memo — excluded from spend: card payments {payments} · statement credits {credits}",
-      "partialNote": "* partial month"
+      "partialNote": "* partial month",
+      "oneOffTitle": "Include / exclude large charges",
+      "includeAll": "Include all",
+      "excludeAll": "Exclude all",
+      "includedBanner": "All one-off charges are included. Uncheck any to see the P&L without it.",
+      "excludedBanner": "Excluding {count, plural, one {# charge} other {# charges}} worth {total} — all figures are net of these.",
+      "linkedCredits": "incl. {total} credits → net {net}",
+      "included": "included",
+      "excluded": "excluded",
+      "memoTitle": "Memo — excluded from spend",
+      "memoPayments": "Card payments made",
+      "memoCredits": "Statement credits & reward redemptions",
+      "memoNote": "Payments to the card and reward credits are transfers/adjustments, not spending, so they sit outside the P&L.",
+      "paycheckNet": "Paycheck (net)",
+      "verified": "verified",
+      "oneOff": "one-off",
+      "close": "Close ✕",
+      "drillTotal": "Total · {count, plural, one {# item} other {# items}}",
+      "drillEmpty": "No items in this month."
     }
   }
 }
