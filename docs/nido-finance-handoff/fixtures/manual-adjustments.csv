@@ -1,0 +1,5 @@
+Date,Time,Cardholder,Amount,Points,Balance,Status,Type,Merchant,Description
+2026-06-20,"4:31 PM","JORGE DOMINGO",-295.00,0,,Posted,Refund,"Meat Club Market","Credit from Jose — shared purchase reimbursement"
+2026-06-20,"4:32 PM","JORGE DOMINGO",-41.00,0,,Posted,Refund,"Meat Club Market","Credit from JP — shared purchase reimbursement"
+2026-07-31,"12:00 PM","JORGE DOMINGO",197.00,0,,Posted,Purchase,CVS,"CVS/PHARMACY — added manually"
+2026-07-31,"12:00 PM","JORGE DOMINGO",150.00,0,,Posted,Purchase,"Hotel — Melbourne Beach","MELBOURNE BEACH HOTEL — added manually"

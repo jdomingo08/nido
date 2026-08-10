@@ -1,0 +1,365 @@
+{
+  "_comment": "GOLDEN MASTER — verified expected output of the CFO engine. A correct TypeScript port MUST reproduce every number here exactly. Generated from fixtures/transactions.csv + fixtures/config.json.",
+  "generatedAt": "2026-07-31",
+  "inputs": {
+    "transactionsFile": "fixtures/transactions.csv",
+    "configFile": "fixtures/config.json",
+    "rawRows": 617,
+    "scopeFilter": "month >= '2026-01'"
+  },
+  "parsing": {
+    "totalRowsParsed": 617,
+    "rowsInScope2026": 617,
+    "spendTransactions": 643,
+    "declinedExcluded": 12,
+    "cardPayments": -33428.64,
+    "statementCredits": -320.61
+  },
+  "months": [
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06",
+    "2026-07"
+  ],
+  "completeMonths": [
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06",
+    "2026-07"
+  ],
+  "partialMonth": null,
+  "fixedMonths": [
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06",
+    "2026-07"
+  ],
+  "monthly": [
+    {
+      "month": "2026-01",
+      "income": 8808.95,
+      "spend": 6333.17,
+      "net": 2475.78
+    },
+    {
+      "month": "2026-02",
+      "income": 8808.95,
+      "spend": 12955.63,
+      "net": -4146.68
+    },
+    {
+      "month": "2026-03",
+      "income": 8808.95,
+      "spend": 8394.78,
+      "net": 414.17
+    },
+    {
+      "month": "2026-04",
+      "income": 8808.95,
+      "spend": 9130.93,
+      "net": -321.98
+    },
+    {
+      "month": "2026-05",
+      "income": 8808.95,
+      "spend": 8292.53,
+      "net": 516.42
+    },
+    {
+      "month": "2026-06",
+      "income": 8808.95,
+      "spend": 10104.04,
+      "net": -1295.09
+    },
+    {
+      "month": "2026-07",
+      "income": 8942.3,
+      "spend": 10298.56,
+      "net": -1356.26
+    }
+  ],
+  "totals": {
+    "income": 61796,
+    "spend": 65509.64,
+    "netCashFlow": -3713.64,
+    "savingsRate": "-6.01%"
+  },
+  "categoryTotals": {
+    "Dining & Takeout": 7332.99,
+    "Groceries & Household": 7382.94,
+    "Shopping & Retail": 3193.91,
+    "Business & Software": 2245.94,
+    "Investments": 5435.41,
+    "Insurance": 1193.36,
+    "Personal Care & Beauty": 1106.2,
+    "Health & Medical": 918.7,
+    "Entertainment & Recreation": 460.8,
+    "Transportation & Auto": 402.5,
+    "Subscriptions": 295.98,
+    "Travel": 3819.97,
+    "Taxes & Fees": 63.75,
+    "Housing & Home": 126.64,
+    "Mortgage": 11575.97,
+    "HOA": 7000,
+    "Utilities": 1683.59,
+    "Phone": 1666,
+    "Auto Loan": 5539.87,
+    "Student Loan": 2602.35,
+    "Kids & Activities": 1193,
+    "Uncategorized": 269.77
+  },
+  "segmentTotals": {
+    "Essential": 40155.67,
+    "Lifestyle": 17402.85,
+    "Business": 2245.94,
+    "Investment": 5435.41,
+    "Unassigned": 269.77
+  },
+  "categoryByMonth": {
+    "Groceries & Household": {
+      "2026-01": 305.14,
+      "2026-02": 352.22,
+      "2026-03": 1058.01,
+      "2026-04": 1013.42,
+      "2026-05": 1118.95,
+      "2026-06": 1612.84,
+      "2026-07": 1922.36
+    },
+    "Dining & Takeout": {
+      "2026-01": 1131.47,
+      "2026-02": 956.91,
+      "2026-03": 990.22,
+      "2026-04": 1170.49,
+      "2026-05": 1243,
+      "2026-06": 1028.67,
+      "2026-07": 812.23
+    },
+    "Shopping & Retail": {
+      "2026-01": 159.96,
+      "2026-02": 513.04,
+      "2026-03": 168,
+      "2026-04": 633.71,
+      "2026-05": 752.08,
+      "2026-06": 522.74,
+      "2026-07": 444.38
+    },
+    "Transportation & Auto": {
+      "2026-01": 43.33,
+      "2026-02": 33,
+      "2026-03": 26.4,
+      "2026-04": 44.41,
+      "2026-06": 88.67,
+      "2026-07": 166.69
+    },
+    "Health & Medical": {
+      "2026-01": 54.45,
+      "2026-02": 8.49,
+      "2026-03": 272.12,
+      "2026-04": 315.96,
+      "2026-05": -192.3,
+      "2026-06": 11.12,
+      "2026-07": 448.86
+    },
+    "Personal Care & Beauty": {
+      "2026-03": 187.82,
+      "2026-04": 144.2,
+      "2026-05": 447.71,
+      "2026-06": 185.4,
+      "2026-07": 141.07
+    },
+    "Travel": {
+      "2026-06": 2127.48,
+      "2026-07": 1692.49
+    },
+    "Uncategorized": {
+      "2026-01": 3,
+      "2026-02": 55.11,
+      "2026-04": 90,
+      "2026-05": 63.17,
+      "2026-06": 35.14,
+      "2026-07": 23.35
+    },
+    "Insurance": {
+      "2026-02": 217.4,
+      "2026-03": 217.4,
+      "2026-04": 189.64,
+      "2026-05": 189.64,
+      "2026-06": 189.64,
+      "2026-07": 189.64
+    },
+    "Entertainment & Recreation": {
+      "2026-02": 27.96,
+      "2026-04": 371.2,
+      "2026-05": 3,
+      "2026-07": 58.64
+    },
+    "Subscriptions": {
+      "2026-01": 22,
+      "2026-02": 35.57,
+      "2026-03": 36.7,
+      "2026-04": 39.69,
+      "2026-05": 40.81,
+      "2026-06": 53.25,
+      "2026-07": 67.96
+    },
+    "Taxes & Fees": {
+      "2026-07": 63.75
+    },
+    "Business & Software": {
+      "2026-01": 37.82,
+      "2026-02": 743.44,
+      "2026-03": 861.75,
+      "2026-04": 571.1,
+      "2026-05": -5.59,
+      "2026-06": 27.4,
+      "2026-07": 10.02
+    },
+    "Housing & Home": {
+      "2026-02": 32.07,
+      "2026-06": 94.57
+    },
+    "Investments": {
+      "2026-02": 5435.41
+    },
+    "Mortgage": {
+      "2026-01": 1653.71,
+      "2026-02": 1653.71,
+      "2026-03": 1653.71,
+      "2026-04": 1653.71,
+      "2026-05": 1653.71,
+      "2026-06": 1653.71,
+      "2026-07": 1653.71
+    },
+    "HOA": {
+      "2026-01": 1000,
+      "2026-02": 1000,
+      "2026-03": 1000,
+      "2026-04": 1000,
+      "2026-05": 1000,
+      "2026-06": 1000,
+      "2026-07": 1000
+    },
+    "Utilities": {
+      "2026-01": 213.41,
+      "2026-02": 182.42,
+      "2026-03": 213.77,
+      "2026-04": 184.52,
+      "2026-05": 269.47,
+      "2026-06": 285,
+      "2026-07": 335
+    },
+    "Phone": {
+      "2026-01": 238,
+      "2026-02": 238,
+      "2026-03": 238,
+      "2026-04": 238,
+      "2026-05": 238,
+      "2026-06": 238,
+      "2026-07": 238
+    },
+    "Auto Loan": {
+      "2026-01": 791.41,
+      "2026-02": 791.41,
+      "2026-03": 791.41,
+      "2026-04": 791.41,
+      "2026-05": 791.41,
+      "2026-06": 791.41,
+      "2026-07": 791.41
+    },
+    "Student Loan": {
+      "2026-01": 520.47,
+      "2026-02": 520.47,
+      "2026-03": 520.47,
+      "2026-04": 520.47,
+      "2026-05": 520.47
+    },
+    "Kids & Activities": {
+      "2026-01": 159,
+      "2026-02": 159,
+      "2026-03": 159,
+      "2026-04": 159,
+      "2026-05": 159,
+      "2026-06": 159,
+      "2026-07": 239
+    }
+  },
+  "incomeBreakdown": {
+    "salary": 51193.66,
+    "bonus": 4115.58,
+    "other": 3427.76,
+    "interest": 3059
+  },
+  "spotChecks": [
+    {
+      "name": "Meat Club Market nets refunds against the purchase",
+      "assertion": "sum of all Meat Club Market spend rows in 2026-06 === 218.52",
+      "value": 218.52
+    },
+    {
+      "name": "Student loan paused Jun+Jul via schedule zeros",
+      "assertion": "Student Loan has no value in 2026-06 or 2026-07",
+      "value": {
+        "jun": 0,
+        "jul": 0
+      }
+    },
+    {
+      "name": "FPL uses per-month actuals, not the average",
+      "assertion": "Utilities by month equals the FPL schedule exactly",
+      "value": {
+        "2026-01": 213.41,
+        "2026-02": 182.42,
+        "2026-03": 213.77,
+        "2026-04": 184.52,
+        "2026-05": 269.47,
+        "2026-06": 285,
+        "2026-07": 335
+      }
+    },
+    {
+      "name": "Declined Apmex retry is excluded; only the posted one counts",
+      "assertion": "Investments total === 5435.41",
+      "value": 5435.41
+    },
+    {
+      "name": "One-off toggle candidates = single purchases >= $500",
+      "assertion": "exactly 5 candidates",
+      "value": [
+        {
+          "date": "2026-02-15",
+          "merchant": "Apmex",
+          "amount": 5435.41
+        },
+        {
+          "date": "2026-07-17",
+          "merchant": "Airbnb",
+          "amount": 1452.02
+        },
+        {
+          "date": "2026-06-21",
+          "merchant": "Airbnb",
+          "amount": 1296.7
+        },
+        {
+          "date": "2026-06-20",
+          "merchant": "Meat Club Market",
+          "amount": 554.52
+        },
+        {
+          "date": "2026-06-29",
+          "merchant": "American Airlines",
+          "amount": 544.8
+        }
+      ]
+    }
+  ]
+}
