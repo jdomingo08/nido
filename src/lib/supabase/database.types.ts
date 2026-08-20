@@ -5,8 +5,10 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: '14.5'
+    PostgrestVersion: '14.15'
   }
   public: {
     Tables: {
@@ -122,7 +124,22 @@ export type Database = {
           weather_suitable?: string[] | null
           week_plan_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'activities_family_id_fkey'
+            columns: ['family_id']
+            isOneToOne: false
+            referencedRelation: 'families'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'activities_week_plan_id_fkey'
+            columns: ['week_plan_id']
+            isOneToOne: false
+            referencedRelation: 'week_plans'
+            referencedColumns: ['id']
+          }
+        ]
       }
       families: {
         Row: {
@@ -206,7 +223,15 @@ export type Database = {
           status?: string
           token?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'family_invitations_family_id_fkey'
+            columns: ['family_id']
+            isOneToOne: false
+            referencedRelation: 'families'
+            referencedColumns: ['id']
+          }
+        ]
       }
       family_members: {
         Row: {
@@ -239,7 +264,15 @@ export type Database = {
           name?: string
           role?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'family_members_family_id_fkey'
+            columns: ['family_id']
+            isOneToOne: false
+            referencedRelation: 'families'
+            referencedColumns: ['id']
+          }
+        ]
       }
       family_preferences: {
         Row: {
@@ -263,136 +296,15 @@ export type Database = {
           kind?: string
           text?: string
         }
-        Relationships: []
-      }
-      kids: {
-        Row: {
-          age: number
-          avatar_color: string
-          color: string
-          created_at: string
-          family_id: string
-          id: string
-          name: string
-          tags: string[]
-          updated_at: string
-        }
-        Insert: {
-          age: number
-          avatar_color?: string
-          color?: string
-          created_at?: string
-          family_id: string
-          id?: string
-          name: string
-          tags?: string[]
-          updated_at?: string
-        }
-        Update: {
-          age?: number
-          avatar_color?: string
-          color?: string
-          created_at?: string
-          family_id?: string
-          id?: string
-          name?: string
-          tags?: string[]
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      llm_calls: {
-        Row: {
-          cost_usd: number
-          created_at: string
-          family_id: string | null
-          id: string
-          model: string
-          purpose: string
-          tokens_in: number
-          tokens_out: number
-        }
-        Insert: {
-          cost_usd?: number
-          created_at?: string
-          family_id?: string | null
-          id?: string
-          model: string
-          purpose: string
-          tokens_in?: number
-          tokens_out?: number
-        }
-        Update: {
-          cost_usd?: number
-          created_at?: string
-          family_id?: string | null
-          id?: string
-          model?: string
-          purpose?: string
-          tokens_in?: number
-          tokens_out?: number
-        }
-        Relationships: []
-      }
-      personal_activities: {
-        Row: {
-          active_from: string | null
-          active_until: string | null
-          category: string
-          color: string
-          created_at: string
-          day: string | null
-          duration_min: number
-          family_id: string
-          family_member_id: string | null
-          id: string
-          is_recurring: boolean
-          notes: string | null
-          recurring_days: string[]
-          start_hour: number
-          title: string
-          updated_at: string
-          week_start_date: string | null
-        }
-        Insert: {
-          active_from?: string | null
-          active_until?: string | null
-          category: string
-          color?: string
-          created_at?: string
-          day?: string | null
-          duration_min: number
-          family_id: string
-          family_member_id?: string | null
-          id?: string
-          is_recurring?: boolean
-          notes?: string | null
-          recurring_days?: string[]
-          start_hour: number
-          title: string
-          updated_at?: string
-          week_start_date?: string | null
-        }
-        Update: {
-          active_from?: string | null
-          active_until?: string | null
-          category?: string
-          color?: string
-          created_at?: string
-          day?: string | null
-          duration_min?: number
-          family_id?: string
-          family_member_id?: string | null
-          id?: string
-          is_recurring?: boolean
-          notes?: string | null
-          recurring_days?: string[]
-          start_hour?: number
-          title?: string
-          updated_at?: string
-          week_start_date?: string | null
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'family_preferences_family_id_fkey'
+            columns: ['family_id']
+            isOneToOne: false
+            referencedRelation: 'families'
+            referencedColumns: ['id']
+          }
+        ]
       }
       finance_accounts: {
         Row: {
@@ -419,7 +331,15 @@ export type Database = {
           kind?: string
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'finance_accounts_family_id_fkey'
+            columns: ['family_id']
+            isOneToOne: false
+            referencedRelation: 'families'
+            referencedColumns: ['id']
+          }
+        ]
       }
       finance_category_rules: {
         Row: {
@@ -449,7 +369,15 @@ export type Database = {
           match_type?: string
           priority?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'finance_category_rules_family_id_fkey'
+            columns: ['family_id']
+            isOneToOne: false
+            referencedRelation: 'families'
+            referencedColumns: ['id']
+          }
+        ]
       }
       finance_fixed_items: {
         Row: {
@@ -485,7 +413,15 @@ export type Database = {
           schedule?: Json
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'finance_fixed_items_family_id_fkey'
+            columns: ['family_id']
+            isOneToOne: false
+            referencedRelation: 'families'
+            referencedColumns: ['id']
+          }
+        ]
       }
       finance_income: {
         Row: {
@@ -545,7 +481,15 @@ export type Database = {
           taxes?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'finance_income_family_id_fkey'
+            columns: ['family_id']
+            isOneToOne: false
+            referencedRelation: 'families'
+            referencedColumns: ['id']
+          }
+        ]
       }
       finance_merchant_overrides: {
         Row: {
@@ -563,7 +507,15 @@ export type Database = {
           family_id?: string
           merchant_key?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'finance_merchant_overrides_family_id_fkey'
+            columns: ['family_id']
+            isOneToOne: false
+            referencedRelation: 'families'
+            referencedColumns: ['id']
+          }
+        ]
       }
       finance_settings: {
         Row: {
@@ -587,7 +539,15 @@ export type Database = {
           prefs?: Json
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'finance_settings_family_id_fkey'
+            columns: ['family_id']
+            isOneToOne: true
+            referencedRelation: 'families'
+            referencedColumns: ['id']
+          }
+        ]
       }
       finance_transactions: {
         Row: {
@@ -647,7 +607,182 @@ export type Database = {
           txn_type?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'finance_transactions_account_id_fkey'
+            columns: ['account_id']
+            isOneToOne: false
+            referencedRelation: 'finance_accounts'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'finance_transactions_family_id_fkey'
+            columns: ['family_id']
+            isOneToOne: false
+            referencedRelation: 'families'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      kids: {
+        Row: {
+          age: number
+          avatar_color: string
+          color: string
+          created_at: string
+          family_id: string
+          id: string
+          name: string
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          age: number
+          avatar_color?: string
+          color?: string
+          created_at?: string
+          family_id: string
+          id?: string
+          name: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          age?: number
+          avatar_color?: string
+          color?: string
+          created_at?: string
+          family_id?: string
+          id?: string
+          name?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'kids_family_id_fkey'
+            columns: ['family_id']
+            isOneToOne: false
+            referencedRelation: 'families'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      llm_calls: {
+        Row: {
+          cost_usd: number
+          created_at: string
+          family_id: string | null
+          id: string
+          model: string
+          purpose: string
+          tokens_in: number
+          tokens_out: number
+        }
+        Insert: {
+          cost_usd?: number
+          created_at?: string
+          family_id?: string | null
+          id?: string
+          model: string
+          purpose: string
+          tokens_in?: number
+          tokens_out?: number
+        }
+        Update: {
+          cost_usd?: number
+          created_at?: string
+          family_id?: string | null
+          id?: string
+          model?: string
+          purpose?: string
+          tokens_in?: number
+          tokens_out?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'llm_calls_family_id_fkey'
+            columns: ['family_id']
+            isOneToOne: false
+            referencedRelation: 'families'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      personal_activities: {
+        Row: {
+          active_from: string | null
+          active_until: string | null
+          category: string
+          color: string
+          created_at: string
+          day: string | null
+          duration_min: number
+          family_id: string
+          family_member_id: string | null
+          id: string
+          is_recurring: boolean
+          notes: string | null
+          recurring_days: string[]
+          start_hour: number
+          title: string
+          updated_at: string
+          week_start_date: string | null
+        }
+        Insert: {
+          active_from?: string | null
+          active_until?: string | null
+          category: string
+          color?: string
+          created_at?: string
+          day?: string | null
+          duration_min: number
+          family_id: string
+          family_member_id?: string | null
+          id?: string
+          is_recurring?: boolean
+          notes?: string | null
+          recurring_days?: string[]
+          start_hour: number
+          title: string
+          updated_at?: string
+          week_start_date?: string | null
+        }
+        Update: {
+          active_from?: string | null
+          active_until?: string | null
+          category?: string
+          color?: string
+          created_at?: string
+          day?: string | null
+          duration_min?: number
+          family_id?: string
+          family_member_id?: string | null
+          id?: string
+          is_recurring?: boolean
+          notes?: string | null
+          recurring_days?: string[]
+          start_hour?: number
+          title?: string
+          updated_at?: string
+          week_start_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'personal_activities_family_id_fkey'
+            columns: ['family_id']
+            isOneToOne: false
+            referencedRelation: 'families'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'personal_activities_family_member_id_fkey'
+            columns: ['family_member_id']
+            isOneToOne: false
+            referencedRelation: 'family_members'
+            referencedColumns: ['id']
+          }
+        ]
       }
       week_plans: {
         Row: {
@@ -674,7 +809,15 @@ export type Database = {
           weather_forecast?: Json | null
           week_start_date?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'week_plans_family_id_fkey'
+            columns: ['family_id']
+            isOneToOne: false
+            referencedRelation: 'families'
+            referencedColumns: ['id']
+          }
+        ]
       }
     }
     Views: {
